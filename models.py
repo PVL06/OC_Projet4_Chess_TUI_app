@@ -38,20 +38,3 @@ class RegisteredPlayers:
                 data = json.load(file)
                 return [Player(**player) for player in data["players"]]
         return None
-
-
-
-def test():
-    try:
-        player = Player(id='df96342', firstname='remi', lastname='gaillard', date_of_birth='09/03/1997')
-    except ValidationError as e:
-        print(e.errors()[0].get("loc"))
-
-    else:
-        players = RegisteredPlayers()
-        players.save_player(player)
-        p = players.get_players()
-        for test in p:
-            print(type(test))
-
-test()
