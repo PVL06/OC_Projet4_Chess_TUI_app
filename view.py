@@ -15,7 +15,7 @@ class Viewer:
             for player in data: table.add_row(*list(player.values()))
             self.console.print(table)
         else:
-            self.view_error_message("No data !!!")
+            self.view_error_message("No data !")
 
     def view_message(self, description: str):
         self.console.print(description, style="green")
@@ -26,12 +26,13 @@ class Viewer:
     def input_menu(self, menu: dict):
         run = True
         while run:
-            for key, value in menu.items():
-                print(key,"->" ,value)
+            for key, value in menu.items(): print(key, "->", value)
             choice = input("Your choice: ")
             if choice in menu.keys():
                 run = False
                 return choice
+            else:
+                self.view_error_message('Invalid input !')
             
     def user_input(self, fields: dict):
         inputs = {}
@@ -44,5 +45,33 @@ class Viewer:
         if choice == "Y" or choice == "y":
             return True
         return False
+    
 
+class View(Viewer):
+    def __init__(self) -> None:
+        super().__init__()
 
+    def main_menu(self):
+        menu = {"1": "Add new player",
+                    "2": "View players",
+                    "3": "Tournament",
+                    "4": "View all tournaments",
+                    "5": "Quit"}
+        return self.input_menu(menu)
+
+    def new_player(self):
+        fields = {
+            "id": "Player id (ex: DF12345): ",
+            "firstname": "Firstname: ",
+            "lastname": "Lastname: ",
+            "date_of_birth": "Date of birth (dd/mm/yyyy): "
+            }
+        return self.user_input(fields)
+
+    def create_tournament(self):
+        fields = {
+            "name": "Tournament name: ",
+            "place": "Tournament place: ",
+            "number_of_round": "Nombre de tour (4 round si sans valeur): "
+        }
+        return self.user_input(fields)
