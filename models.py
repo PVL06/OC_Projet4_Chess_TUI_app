@@ -1,8 +1,4 @@
-import os
-import json
-import random
-import datetime
-
+from tinydb import TinyDB, Query
 from pydantic import BaseModel, Field
 
 
@@ -14,120 +10,89 @@ class Player(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.id} {self.firstname} {self.lastname}"
-    
 
-class PlayersRegister:
+
+class PlayersDb:
     def __init__(self) -> None:
-        self.players_file_path = "data/players.json"
-        if not os.path.exists("data/"):
-            os.mkdir("data")
+        self.db = TinyDB('data/players.json', indent=4)
+        self.query = Query()
 
-    def save_player(self, player: Player) -> bool:
-        if player.id not in [player.id for player in self.get_players()]:
-            if os.path.exists(self.players_file_path):
-                with open(self.players_file_path, "r+") as file:
-                    data = json.load(file)
-                    data["players"].append(player.__dict__)
-                    file.seek(0)
-                    json.dump(data, file, indent=4)
-            else:
-                with open(self.players_file_path, "w") as file:
-                    json.dump({'players': [player.__dict__]}, file, indent=4)
+    def save_new_player(self, player: Player) -> bool:
+        if not self.db.search(self.query.id.matches(player.id)):
+            self.db.insert(player.__dict__)
             return True
         return False
 
-    def get_players(self) -> list[Player] | None:
-        if os.path.exists(self.players_file_path):
-            with open(self.players_file_path, "r") as file:
-                data = json.load(file)
-                return [Player(**player) for player in data["players"]]
+    def get_player(self, id) -> Player | None:
+        player = self.db.search(self.query.id == id)
+        if player:
+            return Player(**player[0])
         return None
 
+    def get_all_players(self) -> list[Player]:
+        players = [Player(**player) for player in self.db]
+        return players
+    
 
 class Tournament:
-    # todo: sauvegarder a chaque modification
     def __init__(self, name: str, place: str, number_of_round=4) -> None:
         self.name = name
         self.place = place
-        self.players = []
         self.number_of_round = number_of_round
+        self.players = []
+        self.round = []
+        self.actual_round = 0
         self.start = (False, "")
         self.end = (False, "")
-        self.actual_turn = 0
 
-    # todo: verifier si joueur pas deja dans la liste
-    def add_player(self, player: Player) -> bool:
-        if not self.start[0]:
-            self.players.append([player, 0])
-            return True
-        return False
-
-    def start_tournament(self) -> bool:
-        if not self.start[0] and len(self.players)%2 == 0:
-            date = datetime.datetime.now()
-            self.start = (True, date.strftime("%d/%m/%Y %X"))
-            random.shuffle(self.players)
-            return True
-        return False
-    
-    def start_new_round(self):
-        self.actual_turn += 1
-        if self.actual_turn < self.number_of_round:
-            round = Round(self.players, self.actual_turn)
-            return round.create_round()
-            #todo: return round player pair
+    def __str__(self):
+        return f"{self.name}, {self.place}"
 
 
-    def end_tournament(self):
-        date = datetime.datetime.now()
-        self.end = (True, date.strftime("%d/%m/%Y %X"))
+class TournamentsDb:
+    def __init__(self) -> None:
+        self.db = TinyDB('data/tournaments.json', indent=4)
+        self.query = Query()
 
-    def add_description(self, description):
-        pass
-
-    def save_tournament(self):
-        pass
-
-class Round:
-    def __init__(self, players, turn_number) -> None:
-        self.players = players
-        self.round_number = turn_number
-        self.player_pair = []
-
-    def create_round(self):
-        if self.round_number == 1:
-            for i in range(0, len(self.players), 2):
-                match = Match(self.players[i], self.players[i+1])
-                self.player_pair.append(match) 
+    def save(self, tournament: Tournament) -> None:
+        if self.db.search(self.query.name.matches(tournament.name)):
+            self.db.update(tournament.__dict__, self.query.name == tournament.name)
         else:
-            pass
+            self.db.insert(tournament.__dict__)
 
-        return self.player_pair
+    def get_tournament(self, name) -> Tournament | None:
+        data = self.db.search(self.query.name.matches(name))[0]
+        if data:
+            return self.convert_data(data)
+        return None
+    
+    def get_all_tournaments(self) -> list[Tournament]:
+        return [self.convert_data(data) for data in self.db.all()]
+
+    @staticmethod
+    def convert_data(data) -> Tournament:
+        tournament = Tournament(data.get('name'), data.get("place"))
+        for key, value in data.items():
+            tournament.key = value
+        return tournament
 
 
-class Match:
-    def __init__(self, player1: Player, player2: Player) -> None:
-        self.player1 = player1
-        self.player2 = player2
-        self.match = ([player1, 0], [player2, 0])
+class PlayerPoint:
+    def __init__(self, player: Player) -> None:
+        self.player = player
+        self.point = 0
+    
+    def get_player_point(self) -> list[Player, int]:
+        return [self.player, self.point]
+    
+    def add_point(self, point: int):
+        self.point += point
 
-    def color_player(self):
-        color = ["white", "black"]
-        random.shuffle(color)
-        return (self.player1, color[0], self.player2, color[1])
+    def __str__(self):
+        return f"{self.player}, {self.point}"
 
-if __name__ == "__main__": # test
-    register = PlayersRegister()
-    tournament = Tournament('test', 'avignon')
-
-    players = register.get_players()
-    tournament.add_player(players[0])
-    tournament.add_player(players[1])
-    tournament.add_player(players[2])
-    tournament.add_player(players[3])
-    tournament.add_player(players[4])
-    tournament.add_player(players[5])
-
-    tournament.start_tournament()
-
-    print(tournament.start_new_round())
+    
+class Round:
+    def __init__(self, round: str) -> None:
+        self.round = round
+        self.matchs = []
