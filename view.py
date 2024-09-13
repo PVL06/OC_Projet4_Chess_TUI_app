@@ -50,17 +50,6 @@ class Viewer:
 class View(Viewer):
     def __init__(self) -> None:
         super().__init__()
-
-    def main_menu(self):
-        '''
-        menu = {"1": "Add new player",
-                    "2": "View players",
-                    "3": "Create new tournament",
-                    "4": "View all tournaments",
-                    "5": "select tournament",
-                    "6": "Quit"}
-        return self.input_menu(menu)
-        '''
     
     def main_menu(self):
         menu = {
