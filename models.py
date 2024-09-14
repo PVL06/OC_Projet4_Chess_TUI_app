@@ -74,7 +74,7 @@ class TournamentsDb: # todo: finsh for rounds data on serialize and deserialize
     def deserialize(data: dict) -> Tournament: # todo: finsh for rounds data
         # Convert DB dict to object Tournament
         tournament = Tournament(data.get("name"), data.get("place"), data.get("number_of_round"))
-        tournament.players = [Player(**value) for value in data.get("players")]
+        tournament.players = [TournamentPlayer(**player) for player in data.get("players")]
         tournament.rounds = [] # todo: a finir (voir objets a l'interieur)
         tournament.actual_round = data.get('actual_round')
         tournament.start = data.get('start')
@@ -87,7 +87,7 @@ class TournamentsDb: # todo: finsh for rounds data on serialize and deserialize
         tournament = {
             "name": object.name,
             "place": object.place,
-            "players": [player.dict() for player in object.players],
+            "players": [player.__dict__ for player in object.players],
             "rounds": [], # todo: a finir
             "actual_round": object.actual_round,
             "start": object.start,
@@ -96,21 +96,20 @@ class TournamentsDb: # todo: finsh for rounds data on serialize and deserialize
         return tournament
 
 
-class PlayerPoint:
-    def __init__(self, player: Player) -> None:
-        self.player = player
-        self.point = 0
-    
-    def get_player_point(self) -> list[Player, int]:
-        return [self.player, self.point]
-    
-    def add_point(self, point: int):
-        self.point += point
+class TournamentPlayer:
+    def __init__(self, id, lastname, firstname, score=0) -> None:
+        self.id = id
+        self.lastname = lastname
+        self.firstname = firstname
+        self.score = str(score)
+
+    def get_player(self):
+        self.player = [(self.id, self.lastname, self.firstname), self.score]
 
     def __str__(self):
-        return f"{self.player}, {self.point}"
-
+        return f"{self.id} : {self.lastname}, {self.firstname}"
     
+
 class Round:
     def __init__(self, round: str) -> None:
         self.round = round

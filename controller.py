@@ -1,7 +1,10 @@
+import os
+from datetime import datetime
+
 from pydantic import ValidationError
 
 from view import View
-from models import Player, PlayersDb, Tournament, TournamentsDb, PlayerPoint, Round
+from models import Player, PlayersDb, Tournament, TournamentsDb, TournamentPlayer, Round
 
 
 class Controller:
@@ -59,13 +62,18 @@ class Controller:
             else:
                 self.view.view_error_message(f"Tournament Name '{user_input.get('name')}' already exist !")
 
-    def select_tournament(self) -> None:
-        tournaments = self.tournament_db.get_all_tournaments()
-        selection = {}
-        for key, tournament in enumerate(tournaments):
-            selection[str(key)] = tournament
-        choice = self.view.input_menu(selection)
-        self.actual_tournament = selection.get(choice)
+    def select_tournament(self) -> bool:
+        if self.tournament_db.get_all_tournaments():
+            tournaments = self.tournament_db.get_all_tournaments()
+            selection = {}
+            for key, tournament in enumerate(tournaments):
+                selection[str(key)] = tournament
+            choice = self.view.input_menu(selection)
+            self.actual_tournament = selection.get(choice)
+            return True
+        else:
+            self.view.view_error_message("No tournament !")
+            return False
 
     def all_tournaments(self) -> None:
         tournaments = self.tournament_db.get_all_tournaments()
@@ -79,24 +87,36 @@ class Controller:
             })
         self.view.view_table("All tournaments", table)
 
-    def start_tournament(): # todo: a faire
-            pass
+    def start_tournament(self): # todo: a faire
+            date = datetime.now().strftime("%d-%m-%Y")
+            self.actual_tournament.start = (True, date)
+            self.tournament_db.save(self.actual_tournament)
+
+            # create round
+            if not self.actual_tournament:
+                pass
+
 
     def add_tournament_player(self) -> None:
-        players = self.players_db.get_all_players()
+        id_in_tournament = [player.id for player in self.actual_tournament.players]
+        players = []
+        for player in self.players_db.get_all_players():
+            if player.id not in id_in_tournament:
+                players.append(TournamentPlayer(player.id, player.lastname, player.firstname))
+                
         loop = True
         while loop:
-            if players := [player for player in players if player not in self.actual_tournament.players]:
+            if players:
                 if not self.actual_tournament.start[0]:
                     players.sort(key=lambda player: player.lastname)
+
                     selection = {}
                     for key, player in enumerate(players):
                         selection[str(key)] = player
                     choice = self.view.input_menu(selection)
 
                     if choice in selection.keys():
-                        player = selection.get(choice)
-                        self.actual_tournament.players.append(player)
+                        self.actual_tournament.players.append(players.pop(int(choice)))
                         self.tournament_db.save(self.actual_tournament)
                         self.view.view_message(f"Player: '{player}' added !")
                         self.view.view_message(f"players in this tournament: {len(self.actual_tournament.players)}")
@@ -109,6 +129,7 @@ class Controller:
                         loop = False
                 else:
                     self.view.view_error_message("don't add player in started tournament !")
+                    loop = False
             else:
                 self.view.view_error_message("All players in tournament or no players in register !")
                 loop = False
@@ -122,10 +143,12 @@ class Controller:
         }]
         self.view.view_table("tournament", data)
 
-    def get_tournament_players(): # todo: a faire
-        pass
+    def get_tournament_players(self) -> None:
+        players = [player.__dict__ for player in self.actual_tournament.players]
+        players.sort(key=lambda player: player["lastname"])
+        self.view.view_table("Players in tournament", players)
 
-    def rounds_and_matchs(): # todo: a faire
+    def rounds_and_matchs(self): # todo: a faire
         pass
 
     def run(self):
@@ -153,8 +176,7 @@ class Controller:
                             case "1":
                                 self.create_new_tournament()
                             case "2":
-                                self.select_tournament()
-                                loop_2 = True
+                                loop_2 = True if self.select_tournament() else False
                                 while loop_2:
                                     choice = self.view.tournament_menu()
                                     match choice:
@@ -181,5 +203,7 @@ class Controller:
 
 
 if __name__ == "__main__":
+    if not os.path.exists("data"):
+        os.mkdir("data")
     ctl = Controller()
     ctl.run()
