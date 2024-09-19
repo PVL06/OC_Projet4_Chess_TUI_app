@@ -5,56 +5,93 @@ from controllers.tournaments_controller import TournamentCtl
 
 class Controller:
     def __init__(self) -> None:
-        self.actual_tournament = None
+        self.run = True
         self.view = View()
         self.players_ctl = PlayerCtl()
         self.tournament_ctl = TournamentCtl()
 
-    def run(self):
-        run = True
-        while run:
-            choice = self.view.main_menu()
-            match choice:
-                case "1":
-                    loop_1 = True
-                    while loop_1:
-                        choice = self.view.players_menu()
-                        match choice:
-                            case "1":
-                                self.players_ctl.register_new_player()
-                            case "2":
-                                self.players_ctl.players_register()
-                            case "3":
-                                choice = "1"
-                                loop_1 = False
-                case "2":
-                    loop_1 = True
-                    while loop_1:
-                        choice = self.view.tournaments_menu()
-                        match choice:
-                            case "1":
-                                self.tournament_ctl.create_new_tournament()
-                            case "2":
-                                loop_2 = True if self.tournament_ctl.select_tournament() else False
-                                while loop_2:
-                                    choice = self.view.tournament_menu()
-                                    match choice:
-                                        case "1":
-                                            self.tournament_ctl.start_tournament()
-                                        case "2":
-                                            self.tournament_ctl.add_tournament_player()
-                                        case "3":
-                                            self.tournament_ctl.tournament_header()
-                                        case "4":
-                                            self.tournament_ctl.get_tournament_players()
-                                        case "5":
-                                            self.tournament_ctl.rounds_and_matches()
-                                        case "6":
-                                            loop_2 = False
-                            case "3":
-                                self.tournament_ctl.all_tournaments()
-                            case "4":
-                                choice = 2
-                                loop_1 = False
-                case "3":
-                    run = False
+    def main_menu(self):
+        menu = {
+            "1": "Players",
+            "2": "Tournaments",
+            "3": "Quit"
+        }
+        choice = self.view.input_menu(menu)
+        match choice:
+            case "1":
+                self.players_menu()
+            case "2":
+                self.tournaments_menu()
+            case "3":
+                self.run = False
+
+    def players_menu(self):
+        menu = {
+            "1": "Add new player to register",
+            "2": "View players register",
+            "3": "Back"
+        }
+        choice = self.view.input_menu(menu)
+        match choice:
+            case "1":
+                self.players_ctl.register_new_player()
+                self.players_menu()
+            case "2":
+                self.players_ctl.players_register()
+                self.players_menu()
+            case "3":
+                self.main_menu()
+
+    def tournaments_menu(self):
+        menu = {
+            "1": "Create new tournament",
+            "2": "Select tournament",
+            "3": "View all tournaments",
+            "4": "Back"
+        }
+        choice = self.view.input_menu(menu)
+        match choice:
+            case "1":
+                self.tournament_ctl.create_new_tournament()
+                self.tournaments_menu()
+            case "2":
+                self.tournament_ctl.select_tournament()
+                self.selected_tournament_menu()
+            case "3":
+                self.tournament_ctl.all_tournaments()
+                self.tournaments_menu()
+            case "4":
+                self.main_menu()
+
+    def selected_tournament_menu(self):
+        menu = {
+            "1": "Start tournament",
+            "2": "Add player to tournament",
+            "3": "View tournament name, place and date",
+            "4": "View tournament players",
+            "5": "View rounds and matches",
+            "6": "Back"
+        }
+        choice = self.view.input_menu(menu)
+        match choice:
+            case "1":
+                self.tournament_ctl.start_tournament()
+                self.selected_tournament_menu()
+            case "2":
+                self.tournament_ctl.add_tournament_player()
+                self.selected_tournament_menu()
+            case "3":
+                self.tournament_ctl.tournament_header()
+                self.selected_tournament_menu()
+            case "4":
+                self.tournament_ctl.get_tournament_players()
+                self.selected_tournament_menu()
+            case "5":
+                self.tournament_ctl.rounds_and_matches()
+                self.selected_tournament_menu()
+            case "6":
+                self.tournaments_menu()
+
+    def main_run(self):
+        while self.run:
+            self.main_menu()
