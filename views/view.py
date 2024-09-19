@@ -2,7 +2,7 @@ from rich.console import Console
 from rich.table import Table
 
 
-class Viewer:
+class View:
     def __init__(self) -> None:
         self.console = Console()
 
@@ -63,61 +63,3 @@ class Viewer:
     @staticmethod
     def enter_input(message):
         input(message)
-
-
-class View(Viewer):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def main_menu(self):
-        menu = {
-            "1": "Players",
-            "2": "Tournaments",
-            "3": "Quit"
-        }
-        return self.input_menu(menu)
-
-    def players_menu(self):
-        menu = {
-            "1": "Add new player to register",
-            "2": "View players register",
-            "3": "Back"
-        }
-        return self.input_menu(menu)
-
-    def tournaments_menu(self):
-        menu = {
-            "1": "Create new tournament",
-            "2": "Select tournament",
-            "3": "View all tournaments",
-            "4": "Back"
-        }
-        return self.input_menu(menu)
-
-    def tournament_menu(self):
-        menu = {
-            "1": "Start tournament",
-            "2": "Add player to tournament",
-            "3": "View tournament name, place and date",
-            "4": "Tournament players",
-            "5": "View rounds and matchs",
-            "6": "Back"
-        }
-        return self.input_menu(menu)
-
-    def new_player(self):
-        fields = {
-            "id": "Player id (ex: DF12345): ",
-            "firstname": "Firstname: ",
-            "lastname": "Lastname: ",
-            "date_of_birth": "Date of birth (dd/mm/yyyy): "
-            }
-        return self.user_input(fields)
-
-    def create_tournament(self):
-        fields = {
-            "name": "Tournament name: ",
-            "place": "Tournament place: ",
-            "number_of_round": "Nombre de tour (4 round si sans valeur): "
-        }
-        return self.user_input(fields)
