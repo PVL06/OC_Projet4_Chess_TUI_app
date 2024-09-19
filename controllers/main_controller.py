@@ -10,7 +10,7 @@ class Controller:
         self.players_ctl = PlayerCtl()
         self.tournament_ctl = TournamentCtl()
 
-    def main_menu(self):
+    def main_menu(self) -> None:
         menu = {
             "1": "Players",
             "2": "Tournaments",
@@ -25,7 +25,7 @@ class Controller:
             case "3":
                 self.run = False
 
-    def players_menu(self):
+    def players_menu(self) -> None:
         menu = {
             "1": "Add new player to register",
             "2": "View players register",
@@ -42,7 +42,7 @@ class Controller:
             case "3":
                 self.main_menu()
 
-    def tournaments_menu(self):
+    def tournaments_menu(self) -> None:
         menu = {
             "1": "Create new tournament",
             "2": "Select tournament",
@@ -63,7 +63,7 @@ class Controller:
             case "4":
                 self.main_menu()
 
-    def selected_tournament_menu(self):
+    def selected_tournament_menu(self) -> None:
         menu = {
             "1": "Start tournament",
             "2": "Add player to tournament",
@@ -92,6 +92,6 @@ class Controller:
             case "6":
                 self.tournaments_menu()
 
-    def main_run(self):
+    def main_run(self) -> None:
         while self.run:
             self.main_menu()
