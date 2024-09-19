@@ -6,14 +6,19 @@ from models.players_model import PlayersDb, Player
 
 class PlayerCtl:
     def __init__(self) -> None:
-        self.actual_tournament = None
         self.view = View()
         self.players_db = PlayersDb()
 
     def register_new_player(self) -> None:
         loop = True
         while loop:
-            user_input = self.view.new_player()
+            fields = {
+                "id": "Player id (ex: DF12345): ",
+                "firstname": "Firstname: ",
+                "lastname": "Lastname: ",
+                "date_of_birth": "Date of birth (dd/mm/yyyy): "
+            }
+            user_input = self.view.user_input(fields)
             user_input["lastname"] = user_input["lastname"].capitalize()
             user_input["firstname"] = user_input["firstname"].capitalize()
             try:
