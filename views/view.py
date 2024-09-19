@@ -11,8 +11,11 @@ class Viewer:
             table = Table(title=title, style="blue")
             table.header_style = "bold blue"
             table.row_styles = ["dim", ""]
-            for column in data[0].keys(): table.add_column(column)
-            for player in data: table.add_row(*list(player.values()))
+            for column in data[0].keys():
+                table.add_column(column)
+            for player in data:
+                table.add_row(*list(player.values()))
+            self.console.clear()
             self.console.print(table)
         else:
             self.view_error_message("No data !")
@@ -23,34 +26,49 @@ class Viewer:
     def view_error_message(self, description: str):
         self.console.print(description, style="red")
 
-    def input_menu(self, menu: dict):
+    def input_menu(self, menu: dict | None):
         run = True
         while run:
-            for key, value in menu.items(): print(key, "->", value)
+            for key, value in menu.items():
+                print(key, "->", value)
             choice = input("Your choice: ")
+            print("*"*30)
             if choice in menu.keys():
-                run = False
                 return choice
             else:
                 self.view_error_message('Invalid input !')
-            
-    def user_input(self, fields: dict):
+                return None
+
+    @staticmethod
+    def user_input(fields: dict):
         inputs = {}
         for key, value in fields.items():
             inputs[key] = input(value)
+        print("*" * 30)
         return inputs
-    
-    def confirm(self, message: str) -> bool:
+
+    @staticmethod
+    def confirm(message: str) -> bool:
         choice = input(f"{message} Y/n ? ")
+        print("*" * 30)
         if choice == "Y" or choice == "y":
             return True
         return False
-    
+
+    @staticmethod
+    def simple_input(message):
+        choice = input(message)
+        return choice
+
+    @staticmethod
+    def enter_input(message):
+        input(message)
+
 
 class View(Viewer):
     def __init__(self) -> None:
         super().__init__()
-    
+
     def main_menu(self):
         menu = {
             "1": "Players",
@@ -58,7 +76,7 @@ class View(Viewer):
             "3": "Quit"
         }
         return self.input_menu(menu)
-    
+
     def players_menu(self):
         menu = {
             "1": "Add new player to register",
@@ -86,7 +104,6 @@ class View(Viewer):
             "6": "Back"
         }
         return self.input_menu(menu)
-
 
     def new_player(self):
         fields = {
