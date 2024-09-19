@@ -11,9 +11,6 @@ class Player(BaseModel):
     def __str__(self) -> str:
         return f"{self.id} {self.lastname} {self.firstname}"
 
-    def short_player(self):
-        return f"{self.id}, {self.lastname}, {self.firstname}"
-
 
 class PlayersDb:
     def __init__(self) -> None:
