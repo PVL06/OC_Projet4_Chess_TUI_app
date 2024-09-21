@@ -1,17 +1,79 @@
 from datetime import datetime
 import random
+import itertools
 
 
 from views.view import View
-from models.tournaments_model import Tournament, TournamentsDb, Round
-from models.players_model import PlayersDb
+from models.tournaments_model import Tournament, TournamentsDb
+from models.players_model import PlayersDb, Player
+
+
+class Rounds:
+    def __init__(self, players: list[Player]) -> None:
+        self.players_score = [[player, 0.0] for player in players]
+        self.all_pairs = list(itertools.combinations(self.players_score, 2))
+        self.used_pairs = []
+        self.start_round = ""
+        self.end_round = ""
+        self.results = []
+
+    def get_player_score(self, player_id: str) -> list | None:
+        for i in range(len(self.players_score)):
+            if player_id == self.players_score[i][0].id:
+                return self.players_score[i]
+        return None
+
+    def get_matches(self) -> list[([Player, int], [Player, int])]:
+        self.all_pairs.sort(key=lambda players_score: abs(players_score[0][1] - players_score[1][1]))
+        players_id = [player[0].id for player in self.players_score]
+
+        matches = []
+        for combination in self.all_pairs:
+            conditions = [
+                combination not in self.used_pairs,
+                combination[0][0].id in players_id,
+                combination[1][0].id in players_id
+            ]
+            if all(conditions):
+                players_id.remove(combination[0][0].id)
+                players_id.remove(combination[1][0].id)
+                matches.append(combination)
+                self.all_pairs.remove(combination)
+
+        if players_id:
+            for i in range(0, len(players_id), 2):
+                player1 = self.get_player_score(players_id[i])
+                player2 = self.get_player_score(players_id[i+1])
+                if player1 and player2:
+                    matches.append((player1, player2))
+
+        return matches
+
+    @staticmethod
+    def get_matches_table(matches):
+        matches_table = []
+        for index, match in enumerate(matches):
+            table_row = {
+                "key": str(index),
+                "player 1 (WHITE)": match[0][0].__str__(),
+                "player 1 score": str(match[0][1]),
+                "": "VS",
+                "player 2 (BLACK)": match[1][0].__str__(),
+                "player 2 score": str(match[1][1]),
+                "Winner": ""
+            }
+            matches_table.append(table_row)
+        return matches_table
+
+    def add_player_point(self, player_id: str, point: float) -> None:
+        for i in range(len(self.players_score)):
+            if player_id == self.players_score[i][0].id:
+                self.players_score[i][1] += point
 
 
 class TournamentCtl:
     def __init__(self) -> None:
         self.actual_tournament = None
-        self.actual_round = []
-        self.round_result = []
         self.view = View()
         self.players_db = PlayersDb()
         self.tournament_db = TournamentsDb()
@@ -20,7 +82,13 @@ class TournamentCtl:
         tournaments_name = [tournament.name for tournament in self.tournament_db.get_all_tournaments()]
         run = True
         while run:
-            user_input = self.view.create_tournament()
+            fields = {
+                "name": "Tournament name: ",
+                "place": "Tournament place: ",
+                "number_of_round": "Number of round (4 round if no value): "
+            }
+            user_input = self.view.user_input(fields)
+
             if user_input.get("name") not in tournaments_name:
                 rounds_number = user_input.get("number_of_round")
                 if rounds_number.isnumeric() or not rounds_number:
@@ -89,11 +157,12 @@ class TournamentCtl:
             for key, tournament in enumerate(tournaments):
                 selection[str(key)] = tournament
             choice = self.view.input_menu(selection)
-            self.actual_tournament = selection.get(choice)
-            return True
+            if choice:
+                self.actual_tournament = selection.get(choice)
+                return True
         else:
             self.view.view_error_message("No tournament !")
-            return False
+        return False
 
     def all_tournaments(self) -> None:
         tournaments = self.tournament_db.get_all_tournaments()
@@ -107,94 +176,76 @@ class TournamentCtl:
             })
         self.view.view_table("All tournaments", table)
 
-    # todo: verifier l'entrée dans selected_match, numeric et dans l'interval du nombre de match
-    def enter_round_result(self, matches_data: list) -> dict:
-        self.view.view_table(self.actual_round.round_name, matches_data)
-        selected_match = int(self.view.simple_input("enter match number: "))
-        menu = {
-            "1": "player 1 win",
-            "2": "player 2 win",
-            "3": "draw"
-        }
-        if choice := self.view.input_menu(menu):
-            matches_data[int(selected_match)]["Winner"] = choice
-            self.round_result[selected_match] = True
-            return matches_data
+    @staticmethod
+    def update_score(rounds: Rounds, round_table):
+        for line in round_table:
+            match line.get("Winner"):
+                case "0":
+                    rounds.add_player_point(line.get("player 1 (WHITE)").split(" ")[0], 0.5)
+                    rounds.add_player_point(line.get("player 2 (BLACK)").split(" ")[0], 0.5)
+                case "1":
+                    rounds.add_player_point(line.get("player 1 (WHITE)").split(" ")[0], 1)
+                case "2":
+                    rounds.add_player_point(line.get("player 2 (BLACK)").split(" ")[0], 1)
 
-    def start_round(self, round_number):
-        # Create a round and add match
-        if round_number == 1:
-            players = random.sample(self.actual_tournament.players, len(self.actual_tournament.players))
-            players_match = [[player.short_player(), 0] for player in players]
-        else:
-            players_match = []
-            for player1, player2 in self.actual_round.matches:
-                players_match.append(player1)
-                players_match.append(player2)
-            players_match.sort(key=lambda player: player[1])
-            self.round_result = []
+    def start_round(self, rounds: Rounds, round_number: int):
+        round_title = f"Round {round_number}/{self.actual_tournament.number_of_round}"
+        matches = rounds.get_matches()
+        round_table = rounds.get_matches_table(matches)
+        rounds.results = [False] * len(matches)
 
-        self.actual_round = Round(f"Round {round_number}", start="", end="", matches=[])
-        for i in range(0, len(players_match), 2):
-            match = (players_match[i], players_match[i+1])
-            self.actual_round.matches.append(match)
-            self.round_result.append(False)
+        self.view.view_table(round_title, round_table)
+        self.view.simple_input(f"Start round {round_number} (press enter) ?")
+        rounds.start_round = datetime.now().strftime("%d-%m-%Y %H:%M")
+        round_title += f"  Start: {rounds.start_round}"
 
-        # show and select stop round or match result
-        matches_data = []
-        for index, match in enumerate(self.actual_round.matches):
-            matches_data.append({
-                "match key": str(index),
-                "player 1 (WHITE)": match[0][0],
-                "score 1": str(match[0][1]),
-                "": "vs",
-                "player 2 (BLACK)": match[1][0],
-                "score 2": str(match[1][1]),
-                "Winner": ""
-            })
+        while not all(rounds.results):
+            self.view.view_table(round_title, round_table)
+            selected_match = int(self.view.simple_input("enter match number: "))
+            menu = {
+                "0": "draw",
+                "1": "player 1 win",
+                "2": "player 2 win"
+            }
+            if choice := self.view.input_menu(menu):
+                round_table[selected_match]["Winner"] = choice
+                rounds.results[selected_match] = True
 
-        self.view.view_table(f"Round {round_number}", matches_data)
-        self.view.enter_input(f"Press enter to start the round {round_number} ")
-        self.actual_round.start = datetime.now().strftime("%d/%m/%Y %H:%M")
-        loop = True
-        while loop:
-            self.view.view_table(self.actual_round.round_name, matches_data)
-            if not self.actual_round.end:
-                menu = {
-                    "1": "Enter match result",
-                    "2": "Stop round"
-                }
-                choice = self.view.input_menu(menu)
-                if choice == "1":
-                    self.enter_round_result(matches_data)
-                elif choice == "2":
-                    self.actual_round.end = datetime.now().strftime("%d/%m/%Y %H:%M")
-            else:
-                if not all(self.round_result):
-                    self.enter_round_result(matches_data)
-                else:
-                    results = [int(result.get("Winner")) for result in matches_data]
-                    for index, result in enumerate(results):
-                        if result == 1:
-                            self.actual_round.matches[index][0][1] += 1
-                        elif result == 2:
-                            self.actual_round.matches[index][1][1] += 1
-                        else:
-                            self.actual_round.matches[index][0][1] += 0.5
-                            self.actual_round.matches[index][1][1] += 0.5
-                    #self.actual_tournament.rounds.append(self.actual_round)
-                    round = self.actual_round.__dict__.copy()
-                    self.actual_tournament.rounds.append(round)
-                    self.tournament_db.save(self.actual_tournament)
-                    loop = False
+        rounds.end_round = datetime.now().strftime("%d/%m/%Y %H:%M")
+        round_title += f" | End: {rounds.end_round}"
+        round_title = "Results of " + round_title
+
+        self.update_score(rounds, round_table)
+        round_table = rounds.get_matches_table(matches)
+        for line in round_table:
+            for key in ["key", "", "Winner"]:
+                del line[key]
+        self.actual_tournament.rounds.append({
+            f"Round {round_number}": {
+                "Started at:": rounds.start_round,
+                "Ended at:": rounds.end_round,
+                "Matches": round_table
+            }
+        })
+        self.tournament_db.save(self.actual_tournament)
+        self.view.view_table(round_title, round_table)
+        self.view.simple_input(f"Press enter to continue")
+
+        rounds.start_round, rounds.end_round = "", ""
 
     def start_tournament(self): # todo: a finir avec date et heure de fin de tournoi et commentaire
-        if not self.actual_tournament.end[0]:
+        if not self.actual_tournament.start[0]:
             self.actual_tournament.start = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
             self.tournament_db.save(self.actual_tournament)
+            players = random.sample(self.actual_tournament.players, len(self.actual_tournament.players))
+            rounds = Rounds(players)
 
             for i in range(1, self.actual_tournament.number_of_round + 1):
-                self.start_round(i)
+                self.start_round(rounds, i)
+
+            self.actual_tournament.end = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
+        else:
+            self.view.view_error_message("Tournament is already started !")
 
     def tournament_header(self) -> None:
         data = [{
