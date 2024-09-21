@@ -52,11 +52,14 @@ class Controller:
         choice = self.view.input_menu(menu)
         match choice:
             case "1":
-                self.tournament_ctl.create_new_tournament()
+                if choice:
+                    self.tournament_ctl.create_new_tournament()
                 self.tournaments_menu()
             case "2":
-                self.tournament_ctl.select_tournament()
-                self.selected_tournament_menu()
+                if self.tournament_ctl.select_tournament():
+                    self.selected_tournament_menu()
+                else:
+                    self.tournaments_menu()
             case "3":
                 self.tournament_ctl.all_tournaments()
                 self.tournaments_menu()
