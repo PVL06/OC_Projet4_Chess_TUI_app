@@ -18,14 +18,6 @@ class Tournament:
         return f"{self.name}, {self.place}"
 
 
-@dataclass
-class Round:
-    round_name: str
-    start: ""
-    end: ""
-    matches: []
-
-
 class TournamentsDb:
     def __init__(self) -> None:
         self.db = TinyDB('data/tournaments.json', indent=4)
@@ -46,21 +38,19 @@ class TournamentsDb:
         return tournaments
 
     @staticmethod
-    def deserialize(data: dict) -> Tournament:  # todo: finsh for rounds data
+    def deserialize(data: dict) -> Tournament:
         # Convert DB dict to object Tournament
         data["players"] = [Player(**player) for player in data.get("players")]
-        data["rounds"] = [Round(**round) for round in data.get("rounds")]
         return Tournament(**data)
 
     @staticmethod
-    def serialize(tournament: Tournament) -> dict:  # todo: finsh for rounds data
+    def serialize(tournament: Tournament) -> dict:
         # Convert tournament object to dict for DB
         tournament = {
             "name": tournament.name,
             "place": tournament.place,
             "number_of_round": tournament.number_of_round,
             "players": [player.__dict__ for player in tournament.players],
-            # "rounds": [round.__dict__ for round in tournament.rounds],
             "rounds": tournament.rounds,
             "start": tournament.start,
             "end": tournament.end
