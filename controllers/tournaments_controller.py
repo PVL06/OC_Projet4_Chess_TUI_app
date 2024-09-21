@@ -280,4 +280,16 @@ class TournamentCtl:
         self.tournament_db.save(self.actual_tournament)
 
     def rounds_and_matches(self):
-        pass
+        loop = True
+        while loop:
+            round_selection = {}
+            for key, round in enumerate(self.actual_tournament.rounds):
+                round_selection[str(key + 1)] = list(round.keys())[0]
+            back = str(len(self.actual_tournament.rounds) + 1)
+            round_selection[back] = "Back"
+            choice = self.view.input_menu(round_selection)
+            if choice == str(back):
+                loop = False
+            else:
+                round = self.actual_tournament.rounds[int(choice) - 1].get(f"Round {choice}")
+                self.view.view_table(f"Round {choice}", round.get("Matches"))
