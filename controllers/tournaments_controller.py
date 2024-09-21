@@ -54,7 +54,7 @@ class Rounds:
         matches_table = []
         for index, match in enumerate(matches):
             table_row = {
-                "key": str(index),
+                "key": str(index + 1),
                 "player 1 (WHITE)": match[0][0].__str__(),
                 "player 1 score": str(match[0][1]),
                 "": "VS",
@@ -99,7 +99,8 @@ class TournamentCtl:
                             "players": [],
                             "rounds": [],
                             "start": (False, ""),
-                            "end": (False, "")
+                            "end": (False, ""),
+                            "comment": ""
                         }
                         user_input.update(tournament_data)
                         tournament = Tournament(**user_input)
@@ -116,7 +117,7 @@ class TournamentCtl:
             else:
                 self.view.view_error_message(f"Tournament Name '{user_input.get('name')}' already exist !")
 
-    def add_tournament_player(self) -> None: # todo: ajouter fonction pour dire si assez de joueur par rapport au nombre de round
+    def add_tournament_player(self) -> None:
         players_db = self.players_db.get_all_players()
 
         loop = True
@@ -144,6 +145,8 @@ class TournamentCtl:
 
                     if not self.view.confirm("add new player ?"):
                         loop = False
+                        if self.view.confirm("Do you start the tournament ?"):
+                            self.start_tournament()
                 else:
                     self.view.view_error_message("don't add player in started tournament !")
                     loop = False
@@ -177,7 +180,7 @@ class TournamentCtl:
         self.view.view_table("All tournaments", table)
 
     @staticmethod
-    def update_score(rounds: Rounds, round_table):
+    def update_scores(rounds: Rounds, round_table) -> None:
         for line in round_table:
             match line.get("Winner"):
                 case "0":
@@ -188,7 +191,7 @@ class TournamentCtl:
                 case "2":
                     rounds.add_player_point(line.get("player 2 (BLACK)").split(" ")[0], 1)
 
-    def start_round(self, rounds: Rounds, round_number: int):
+    def start_round(self, rounds: Rounds, round_number: int) -> None:
         round_title = f"Round {round_number}/{self.actual_tournament.number_of_round}"
         matches = rounds.get_matches()
         round_table = rounds.get_matches_table(matches)
@@ -199,23 +202,24 @@ class TournamentCtl:
         rounds.start_round = datetime.now().strftime("%d-%m-%Y %H:%M")
         round_title += f"  Start: {rounds.start_round}"
 
+        selection = [i+1 for i in range(len(matches))]
         while not all(rounds.results):
             self.view.view_table(round_title, round_table)
-            selected_match = int(self.view.simple_input("enter match number: "))
-            menu = {
-                "0": "draw",
-                "1": "player 1 win",
-                "2": "player 2 win"
-            }
-            if choice := self.view.input_menu(menu):
-                round_table[selected_match]["Winner"] = choice
-                rounds.results[selected_match] = True
+            if selected_match := self.view.select_int_input("enter match number: ", selection):
+                menu = {
+                    "0": "draw",
+                    "1": "player 1 win",
+                    "2": "player 2 win"
+                }
+                if choice := self.view.input_menu(menu):
+                    round_table[selected_match - 1]["Winner"] = choice
+                    rounds.results[selected_match - 1] = True
 
         rounds.end_round = datetime.now().strftime("%d/%m/%Y %H:%M")
         round_title += f" | End: {rounds.end_round}"
         round_title = "Results of " + round_title
 
-        self.update_score(rounds, round_table)
+        self.update_scores(rounds, round_table)
         round_table = rounds.get_matches_table(matches)
         for line in round_table:
             for key in ["key", "", "Winner"]:
@@ -230,20 +234,26 @@ class TournamentCtl:
         self.tournament_db.save(self.actual_tournament)
         self.view.view_table(round_title, round_table)
         self.view.simple_input(f"Press enter to continue")
-
         rounds.start_round, rounds.end_round = "", ""
 
-    def start_tournament(self): # todo: a finir avec date et heure de fin de tournoi et commentaire
+    def start_tournament(self):
         if not self.actual_tournament.start[0]:
-            self.actual_tournament.start = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
-            self.tournament_db.save(self.actual_tournament)
-            players = random.sample(self.actual_tournament.players, len(self.actual_tournament.players))
-            rounds = Rounds(players)
+            if len(self.actual_tournament.players) % 2 == 0:
+                self.actual_tournament.start = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
+                self.tournament_db.save(self.actual_tournament)
+                players = random.sample(self.actual_tournament.players, len(self.actual_tournament.players))
+                rounds = Rounds(players)
 
-            for i in range(1, self.actual_tournament.number_of_round + 1):
-                self.start_round(rounds, i)
+                for i in range(1, self.actual_tournament.number_of_round + 1):
+                    self.start_round(rounds, i)
 
-            self.actual_tournament.end = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
+                self.actual_tournament.end = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
+                if self.view.confirm("Do you add a comment for this tournament ?"):
+                    self.add_tournament_comment()
+            else:
+                self.view.view_message("Number of player is impair !")
+                if self.view.confirm("Do you add a new player ?"):
+                    self.add_tournament_player()
         else:
             self.view.view_error_message("Tournament is already started !")
 
@@ -252,7 +262,7 @@ class TournamentCtl:
             "Tournament name": self.actual_tournament.name,
             "Place": self.actual_tournament.place,
             "Start date": self.actual_tournament.start[1] if self.actual_tournament.start[0] else "No started !",
-            "End date": self.actual_tournament.end[1] if self.actual_tournament.end[0] else "No started !"
+            "End date": self.actual_tournament.end[1] if self.actual_tournament.end[0] else "No finished !"
         }]
         self.view.view_table("tournament", data)
 
@@ -260,6 +270,14 @@ class TournamentCtl:
         players = [player.__dict__ for player in self.actual_tournament.players]
         players.sort(key=lambda player: player.get("lastname"))
         self.view.view_table("Players in tournament", players)
+
+    def add_tournament_comment(self) -> None:
+        if self.actual_tournament.comment:
+            if not self.view.confirm("Comment already exist, do you create new comment ?"):
+                return None
+        comment = self.view.simple_input("Enter your comment (enter to valid): ")
+        self.actual_tournament.comment = comment
+        self.tournament_db.save(self.actual_tournament)
 
     def rounds_and_matches(self):
         pass

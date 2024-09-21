@@ -13,6 +13,7 @@ class Tournament:
     rounds: []
     start: ""
     end: ""
+    comment: str
 
     def __str__(self):
         return f"{self.name}, {self.place}"
@@ -53,6 +54,7 @@ class TournamentsDb:
             "players": [player.__dict__ for player in tournament.players],
             "rounds": tournament.rounds,
             "start": tournament.start,
-            "end": tournament.end
+            "end": tournament.end,
+            "comment": tournament.comment
         }
         return tournament

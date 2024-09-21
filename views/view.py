@@ -61,5 +61,11 @@ class View:
         return choice
 
     @staticmethod
-    def enter_input(message):
-        input(message)
+    def select_int_input(message: str, selection: list[int]) -> int | None:
+        choice = input(message)
+        if choice.isnumeric():
+            choice = int(choice)
+            if choice in selection:
+                return choice
+        else:
+            return None
