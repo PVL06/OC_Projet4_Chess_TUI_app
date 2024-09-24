@@ -1,10 +1,10 @@
 import os
 
-from views.view_menu import Controller
+from views.view_menu import MenuCtl
 
 if not os.path.exists("data"):
     os.mkdir("data")
 
 if __name__ == "__main__":
-    ctl = Controller()
+    ctl = MenuCtl()
     ctl.main_run()

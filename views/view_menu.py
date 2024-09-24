@@ -1,21 +1,24 @@
+from rich.console import Console
+
 from views.view import View
 from controllers.players_controller import PlayerCtl
 from controllers.tournaments_controller import TournamentCtl
 
 
-class Controller:
+class MenuCtl:
     def __init__(self) -> None:
         self.run = True
         self.view = View()
         self.players_ctl = PlayerCtl()
         self.tournament_ctl = TournamentCtl()
+        self.console = Console()
 
     def main_menu(self) -> None:
-        menu = {
-            "1": "Players",
-            "2": "Tournaments",
-            "3": "Quit"
-        }
+        menu = [
+            ("1", "Player"),
+            ("2", "Tournament"),
+            ("3", "Quit")
+        ]
         choice = self.view.input_menu(menu)
         match choice:
             case "1":
@@ -26,11 +29,11 @@ class Controller:
                 self.run = False
 
     def players_menu(self) -> None:
-        menu = {
-            "1": "Add new player to register",
-            "2": "View players register",
-            "3": "Back"
-        }
+        menu = [
+            ("1", "Add new player to register"),
+            ("2", "View players register"),
+            ("3", "Back")
+        ]
         choice = self.view.input_menu(menu)
         match choice:
             case "1":
@@ -41,14 +44,16 @@ class Controller:
                 self.players_menu()
             case "3":
                 self.main_menu()
+            case _:
+                self.players_menu()
 
     def tournaments_menu(self) -> None:
-        menu = {
-            "1": "Create new tournament",
-            "2": "Select tournament",
-            "3": "View all tournaments",
-            "4": "Back"
-        }
+        menu = [
+            ("1", "Create new tournament"),
+            ("2", "Select tournament"),
+            ("3", "View all tournaments"),
+            ("4", "Back")
+        ]
         choice = self.view.input_menu(menu)
         match choice:
             case "1":
@@ -65,17 +70,19 @@ class Controller:
                 self.tournaments_menu()
             case "4":
                 self.main_menu()
+            case _:
+                self.tournaments_menu()
 
     def selected_tournament_menu(self) -> None:
-        menu = {
-            "1": "Start tournament",
-            "2": "Add player to tournament",
-            "3": "Add or modify comment",
-            "4": "View tournament name, place and date",
-            "5": "View tournament players",
-            "6": "View rounds and matches",
-            "7": "Back"
-        }
+        menu = [
+            ("1", "Start tournament"),
+            ("2", "Add player to tournament"),
+            ("3", "Add or modify comment"),
+            ("4", "View tournament name, place and date"),
+            ("5", "View tournament players"),
+            ("6", "View rounds and matches"),
+            ("7", "Back")
+        ]
         choice = self.view.input_menu(menu)
         match choice:
             case "1":
@@ -98,6 +105,8 @@ class Controller:
                 self.selected_tournament_menu()
             case "7":
                 self.tournaments_menu()
+            case _:
+                self.selected_tournament_menu()
 
     def main_run(self) -> None:
         while self.run:

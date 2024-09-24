@@ -127,13 +127,13 @@ class TournamentCtl:
             players_available = [player for player in players_db if player.id not in players_tournament_id]
             if players_available:
                 if not self.actual_tournament.start[0]:
-
-                    selection = {}
+                    keys = [str(i) for i in range(len(players_available))]
+                    selection = []
                     for key, player in enumerate(players_available):
-                        selection[str(key)] = f"{player.id}: {player.lastname}, {player.firstname}"
+                        selection.append((str(key), f"{player.id}: {player.lastname}, {player.firstname}"))
                     choice = self.view.input_menu(selection)
 
-                    if choice in selection.keys():
+                    if choice in keys:
                         player = players_available[int(choice)]
                         self.actual_tournament.players.append(player)
                         self.tournament_db.save(self.actual_tournament)
@@ -157,12 +157,13 @@ class TournamentCtl:
 
     def select_tournament(self) -> bool:
         if tournaments := self.tournament_db.get_all_tournaments():
-            selection = {}
+            selection = []
             for key, tournament in enumerate(tournaments):
-                selection[str(key)] = tournament
+                started = 'Started' if tournament.start[0] else 'No started'
+                selection.append((str(key), f"{tournament.name} {tournament.place} {started}"))
             choice = self.view.input_menu(selection)
             if choice:
-                self.actual_tournament = selection.get(choice)
+                self.actual_tournament = tournaments[int(choice)]
                 return True
         else:
             self.view.view_error_message("No tournament !")
@@ -216,11 +217,7 @@ class TournamentCtl:
         while not all(rounds.results):
             self.view.view_table(round_title, round_table)
             if selected_match := self.view.check_select_input("enter match number: ", selection):
-                menu = {
-                    "0": "draw",
-                    "1": "player 1 win",
-                    "2": "player 2 win"
-                }
+                menu = [("0", "Draw"), ("1", "Player 1 win"), ("2", "Player 2 win")]
                 if choice := self.view.input_menu(menu):
                     round_table[selected_match - 1]["Winner"] = choice
                     rounds.results[selected_match - 1] = True
@@ -283,14 +280,17 @@ class TournamentCtl:
     def rounds_and_matches(self) -> None:
         loop = True
         while loop:
-            round_selection = {}
-            for key, round in enumerate(self.actual_tournament.rounds):
-                round_selection[str(key + 1)] = list(round.keys())[0]
-            back = str(len(self.actual_tournament.rounds) + 1)
-            round_selection[back] = "Back"
+            keys = []
+            for round in self.actual_tournament.rounds:
+                keys.append(list(round.keys())[0])
+            round_selection = [("0", "Back")]
+            for i in range(len(self.actual_tournament.rounds)):
+                round_selection.append((str(i+1), keys[i]))
             choice = self.view.input_menu(round_selection)
-            if choice == str(back):
-                loop = False
-            else:
-                selected_round = self.actual_tournament.rounds[int(choice) - 1].get(f"Round {choice}")
-                self.view.view_table(f"Round {choice}", selected_round.get("Matches"))
+            if choice:
+                if choice == "0":
+                    loop = False
+                else:
+                    round_name = f"Round {str(int(choice))}"
+                    selected_round = self.actual_tournament.rounds[int(choice) - 1][round_name]["Matches"]
+                    self.view.view_table(f"Round {round_name}", selected_round)
