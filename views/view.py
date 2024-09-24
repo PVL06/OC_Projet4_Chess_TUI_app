@@ -60,12 +60,14 @@ class View:
         choice = input(message)
         return choice
 
-    @staticmethod
-    def select_int_input(message: str, selection: list[int]) -> int | None:
+    def check_select_input(self, message: str, selection: list[int]) -> int | None:
         choice = input(message)
-        if choice.isnumeric():
+        try:
             choice = int(choice)
+        except ValueError:
+            self.view_error_message("Enter a number !")
+        else:
             if choice in selection:
                 return choice
-        else:
-            return None
+            self.view_error_message("Number not in selection !")
+        return None

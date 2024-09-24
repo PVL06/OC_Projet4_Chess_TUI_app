@@ -205,7 +205,7 @@ class TournamentCtl:
         selection = [i+1 for i in range(len(matches))]
         while not all(rounds.results):
             self.view.view_table(round_title, round_table)
-            if selected_match := self.view.select_int_input("enter match number: ", selection):
+            if selected_match := self.view.check_select_input("enter match number: ", selection):
                 menu = {
                     "0": "draw",
                     "1": "player 1 win",

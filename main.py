@@ -1,6 +1,6 @@
 import os
 
-from controllers.main_controller import Controller
+from views.view_menu import Controller
 
 
 if __name__ == "__main__":
