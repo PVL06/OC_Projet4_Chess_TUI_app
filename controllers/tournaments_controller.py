@@ -50,7 +50,7 @@ class Rounds:
         return matches
 
     @staticmethod
-    def get_matches_table(matches):
+    def get_matches_table(matches) -> list[dict]:
         matches_table = []
         for index, match in enumerate(matches):
             table_row = {
@@ -91,8 +91,11 @@ class TournamentCtl:
 
             if user_input.get("name") not in tournaments_name:
                 rounds_number = user_input.get("number_of_round")
-                if rounds_number.isnumeric() or not rounds_number:
+                try:
                     rounds_number = int(rounds_number) if rounds_number else 4
+                except ValueError:
+                    self.view.view_error_message("Round must be an integer in range 4 to 10 !")
+                else:
                     if 4 <= rounds_number <= 10:
                         user_input["number_of_round"] = rounds_number
                         tournament_data = {
@@ -112,8 +115,6 @@ class TournamentCtl:
                         run = False
                     else:
                         self.view.view_error_message("Round must be in range 4 to 10 !")
-                else:
-                    self.view.view_error_message("Round must be an integer in range 4 to 10 !")
             else:
                 self.view.view_error_message(f"Tournament Name '{user_input.get('name')}' already exist !")
 
@@ -179,17 +180,26 @@ class TournamentCtl:
             })
         self.view.view_table("All tournaments", table)
 
-    @staticmethod
-    def update_scores(rounds: Rounds, round_table) -> None:
-        for line in round_table:
-            match line.get("Winner"):
-                case "0":
-                    rounds.add_player_point(line.get("player 1 (WHITE)").split(" ")[0], 0.5)
-                    rounds.add_player_point(line.get("player 2 (BLACK)").split(" ")[0], 0.5)
-                case "1":
-                    rounds.add_player_point(line.get("player 1 (WHITE)").split(" ")[0], 1)
-                case "2":
-                    rounds.add_player_point(line.get("player 2 (BLACK)").split(" ")[0], 1)
+    def start_tournament(self) -> None:
+        if not self.actual_tournament.start[0]:
+            if len(self.actual_tournament.players) % 2 == 0:
+                self.actual_tournament.start = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
+                self.tournament_db.save(self.actual_tournament)
+                players = random.sample(self.actual_tournament.players, len(self.actual_tournament.players))
+                rounds = Rounds(players)
+
+                for i in range(1, self.actual_tournament.number_of_round + 1):
+                    self.start_round(rounds, i)
+
+                self.actual_tournament.end = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
+                if self.view.confirm("Do you add a comment for this tournament ?"):
+                    self.add_tournament_comment()
+            else:
+                self.view.view_message("Number of player is impair !")
+                if self.view.confirm("Do you add a new player ?"):
+                    self.add_tournament_player()
+        else:
+            self.view.view_error_message("Tournament is already started !")
 
     def start_round(self, rounds: Rounds, round_number: int) -> None:
         round_title = f"Round {round_number}/{self.actual_tournament.number_of_round}"
@@ -236,26 +246,17 @@ class TournamentCtl:
         self.view.simple_input(f"Press enter to continue")
         rounds.start_round, rounds.end_round = "", ""
 
-    def start_tournament(self):
-        if not self.actual_tournament.start[0]:
-            if len(self.actual_tournament.players) % 2 == 0:
-                self.actual_tournament.start = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
-                self.tournament_db.save(self.actual_tournament)
-                players = random.sample(self.actual_tournament.players, len(self.actual_tournament.players))
-                rounds = Rounds(players)
-
-                for i in range(1, self.actual_tournament.number_of_round + 1):
-                    self.start_round(rounds, i)
-
-                self.actual_tournament.end = (True, datetime.now().strftime("%d-%m-%Y %H:%M"))
-                if self.view.confirm("Do you add a comment for this tournament ?"):
-                    self.add_tournament_comment()
-            else:
-                self.view.view_message("Number of player is impair !")
-                if self.view.confirm("Do you add a new player ?"):
-                    self.add_tournament_player()
-        else:
-            self.view.view_error_message("Tournament is already started !")
+    @staticmethod
+    def update_scores(rounds: Rounds, round_table) -> None:
+        for line in round_table:
+            match line.get("Winner"):
+                case "0":
+                    rounds.add_player_point(line.get("player 1 (WHITE)").split(" ")[0], 0.5)
+                    rounds.add_player_point(line.get("player 2 (BLACK)").split(" ")[0], 0.5)
+                case "1":
+                    rounds.add_player_point(line.get("player 1 (WHITE)").split(" ")[0], 1)
+                case "2":
+                    rounds.add_player_point(line.get("player 2 (BLACK)").split(" ")[0], 1)
 
     def tournament_header(self) -> None:
         data = [{
@@ -279,7 +280,7 @@ class TournamentCtl:
         self.actual_tournament.comment = comment
         self.tournament_db.save(self.actual_tournament)
 
-    def rounds_and_matches(self):
+    def rounds_and_matches(self) -> None:
         loop = True
         while loop:
             round_selection = {}
@@ -291,5 +292,5 @@ class TournamentCtl:
             if choice == str(back):
                 loop = False
             else:
-                round = self.actual_tournament.rounds[int(choice) - 1].get(f"Round {choice}")
-                self.view.view_table(f"Round {choice}", round.get("Matches"))
+                selected_round = self.actual_tournament.rounds[int(choice) - 1].get(f"Round {choice}")
+                self.view.view_table(f"Round {choice}", selected_round.get("Matches"))
