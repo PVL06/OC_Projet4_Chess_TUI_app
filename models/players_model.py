@@ -35,10 +35,8 @@ class PlayersDb:
             return player.doc_id
         return None
 
-    def update_player(self, player: Player) -> bool:
-        document_id = self.get_player_doc_id(player.id)
-        if document_id:
-            self.db.update(player.__dict__, doc_ids=[document_id])
+    def update_player(self, player: Player, doc_id: int) -> bool:
+        if self.db.update(player.__dict__, doc_ids=[doc_id]):
             return True
         return False
 
