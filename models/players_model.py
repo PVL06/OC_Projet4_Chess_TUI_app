@@ -29,6 +29,24 @@ class PlayersDb:
             return Player(**player[0])
         return None
 
+    def get_player_doc_id(self, player_id: str) -> int | None:
+        if self.db.search(self.query.id.matches(player_id)):
+            player = self.db.get(self.query.id == player_id)
+            return player.doc_id
+        return None
+
+    def update_player(self, player: Player) -> bool:
+        document_id = self.get_player_doc_id(player.id)
+        if document_id:
+            self.db.update(player.__dict__, doc_ids=[document_id])
+            return True
+        return False
+
+    def remove_player(self, player_id: str) -> bool:
+        if self.db.remove(self.query.id.matches(player_id)):
+            return True
+        return False
+
     def get_all_players(self) -> list[Player]:
         players = [Player(**player) for player in self.db]
         players.sort(key=lambda player: player.lastname)
