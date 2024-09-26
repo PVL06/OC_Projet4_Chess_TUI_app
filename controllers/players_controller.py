@@ -102,7 +102,7 @@ class PlayerCtl:
             self.view.table_view("Select player", players_dict, selection=True)
             choice = self.view.simple_input("Enter key value: ")
             try:
-                choice = int(choice)
+                choice = int(choice) - 1
             except ValueError:
                 self.view.view_message("Invalid input !", error=True)
             else:

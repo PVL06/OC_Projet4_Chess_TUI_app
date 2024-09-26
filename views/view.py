@@ -19,12 +19,14 @@ class View:
             table = Table(title=title, min_width=80, style=CYAN, box=box.ROUNDED)
             table.header_style = f"bold CYAN"
             table.row_styles = ["bold dim", "bold CYAN"]
+            if selection:
+                table.add_column("key")
             for column in data[0].keys():
                 table.add_column(column)
             for key, item in enumerate(data):
                 list_values = list(item.values())
                 if selection:
-                    list_values.insert(0, str(key))
+                    list_values.insert(0, str(key + 1))
                 table.add_row(*list_values)
             self.console.print(table)
             return True
