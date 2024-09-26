@@ -1,11 +1,13 @@
 from views.view import View
 from controllers.players_controller import PlayerCtl
+from controllers.tournaments_controller import TournamentCtl
 
 
 class Controller:
     def __init__(self):
         self.view = View()
-        self.player_ctl = PlayerCtl()
+        self.players_ctl = PlayerCtl()
+        self.tournaments_ctl = TournamentCtl()
 
     def start(self):
         running = True
@@ -18,9 +20,9 @@ class Controller:
             choice = self.view.input_menu(menu)
             match choice:
                 case "1":
-                    self.player_ctl.players_menu()
+                    self.players_ctl.players_menu()
                 case "2":
-                    pass
+                    self.tournaments_ctl.tournaments_menu()
                 case "3":
                     running = False
                 case _:
