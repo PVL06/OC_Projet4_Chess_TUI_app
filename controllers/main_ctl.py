@@ -1,13 +1,13 @@
 from views.view import View
-from controllers.players_controller import PlayerCtl
-from controllers.tournaments_controller import TournamentCtl
+from controllers.players_ctl import PlayerCtl
+from controllers.tournaments_ctl import TournamentsCtl
 
 
 class Controller:
     def __init__(self):
         self.view = View()
         self.players_ctl = PlayerCtl()
-        self.tournaments_ctl = TournamentCtl()
+        self.tournaments_ctl = TournamentsCtl()
 
     def start(self):
         running = True

@@ -1,6 +1,6 @@
 import os
 
-from controllers.main_controller import Controller
+from controllers.main_ctl import Controller
 
 
 class Run:

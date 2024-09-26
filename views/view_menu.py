@@ -1,8 +1,8 @@
 from rich.console import Console
 
 from views.view import View
-from controllers.players_controller import PlayerCtl
-from controllers.tournaments_controller import TournamentCtl
+from controllers.players_ctl import PlayerCtl
+from controllers.tournaments_ctl import TournamentsCtl
 
 
 class MenuCtl:
@@ -10,7 +10,7 @@ class MenuCtl:
         self.run = True
         self.view = View()
         self.players_ctl = PlayerCtl()
-        self.tournament_ctl = TournamentCtl()
+        self.tournament_ctl = TournamentsCtl()
         self.console = Console()
 
     def main_menu(self) -> None:

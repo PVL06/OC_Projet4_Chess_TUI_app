@@ -1,19 +1,18 @@
 from tinydb import TinyDB, Query
-from dataclasses import dataclass
 
 from models.players_model import Player
 
 
-@dataclass
 class Tournament:
-    name: str
-    place: str
-    number_of_round: 4
-    players: []
-    rounds: []
-    start: ""
-    end: ""
-    comment: str
+    def __init__(self, name: str, place: str, number_of_round=4) -> None:
+        self.name = name
+        self.place = place
+        self.number_of_round = number_of_round
+        self.players = []
+        self.rounds = []
+        self.start = ""
+        self.end = ""
+        self.comment = ""
 
     def __str__(self):
         return f"{self.name}, {self.place}"
@@ -41,8 +40,13 @@ class TournamentsDb:
     @staticmethod
     def deserialize(data: dict) -> Tournament:
         # Convert DB dict to object Tournament
-        data["players"] = [Player(**player) for player in data.get("players")]
-        return Tournament(**data)
+        tournament = Tournament(data.get("name"), data.get("place"), data.get("number_of_round"))
+        tournament.players = [Player(**player) for player in data.get("players")]
+        tournament.rounds = data.get("rounds")
+        tournament.start = data.get("start")
+        tournament.end = data.get("end")
+        tournament.comment = data.get("comment")
+        return tournament
 
     @staticmethod
     def serialize(tournament: Tournament) -> dict:
