@@ -1,10 +1,18 @@
 import os
 
-from views.view_menu import MenuCtl
+from controllers.main_controller import Controller
 
-if not os.path.exists("data"):
-    os.mkdir("data")
+
+class Run:
+    def __init__(self):
+        self.controller = Controller()
+
+    def start(self):
+        if not os.path.exists("data"):
+            os.mkdir("data")
+        self.controller.start()
+
 
 if __name__ == "__main__":
-    ctl = MenuCtl()
-    ctl.main_run()
+    run = Run()
+    run.start()
