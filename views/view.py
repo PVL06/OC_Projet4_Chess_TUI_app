@@ -2,9 +2,9 @@ from rich.console import Console
 from rich.table import Table
 from rich import print, box
 
-CYAN = "bold dark_cyan"
-ORANGE = "bold bold dark_orange3"
-BLUE = "bold dodger_blue2"
+CYAN = "dark_cyan"
+ORANGE = "bold dark_orange3"
+BLUE = "dodger_blue2"
 GREEN = "bold green3"
 RED = "bold red"
 
@@ -13,46 +13,46 @@ class View:
     def __init__(self) -> None:
         self.console = Console()
 
-    def view_table(self, title: str, data: list[dict]) -> None:
+    def table_view(self, title: str, data: list[dict], selection=False) -> bool:
         self.console.clear()
         if data:
-            table = Table(title=title, min_width=80, style=BLUE, box=box.ROUNDED)
-            table.header_style = BLUE
-            table.row_styles = ["dim", ""]
+            table = Table(title=title, min_width=80, style=CYAN, box=box.ROUNDED)
+            table.header_style = f"bold CYAN"
+            table.row_styles = ["bold dim", "bold CYAN"]
             for column in data[0].keys():
                 table.add_column(column)
-            for player in data:
-                table.add_row(*list(player.values()))
+            for key, item in enumerate(data):
+                list_values = list(item.values())
+                if selection:
+                    list_values.insert(0, str(key))
+                table.add_row(*list_values)
             self.console.print(table)
-        else:
-            self.view_error_message("No data !")
-        self.simple_input("Press enter to continue")
+            return True
 
-    def view_message(self, description: str) -> None:
-        self.console.print(description, style=GREEN)
+    def view_message(self, description: str, error=False) -> None:
+        self.console.print(description, style=RED if error else GREEN)
+        self.enter_continue()
 
-    def view_error_message(self, description: str) -> None:
-        self.console.print(description, style=RED)
+    def enter_continue(self):
+        self.console.input(f"[{ORANGE}]Press on key to continue[/]")
 
     def input_menu(self, menu_list: list | None) -> str | None:
         self.console.clear()
-        run = True
-        while run:
-            keys = [menu[0] for menu in menu_list]
-            table = Table(box=box.ROUNDED, min_width=80, style=CYAN, header_style=CYAN, show_lines=True, show_header=False)
-            table.add_column("Key", justify="center")
-            table.add_column("Menu", justify="center", max_width=10)
-            for menu in menu_list:
-                table.add_row(*menu, style=CYAN)
-            print(table)
-            choice = self.console.input(f"[{ORANGE}]Your key choice: [/]")
-            if choice in keys:
-                return choice
-            else:
-                self.view_error_message('Invalid input !')
-                return None
+        table = Table(box=box.ROUNDED,
+                      min_width=80,
+                      style=CYAN,
+                      header_style=f"bold CYAN",
+                      show_lines=True,
+                      show_header=False)
+        table.add_column("Key", justify="center")
+        table.add_column("Menu", justify="center", max_width=10)
+        for menu in menu_list:
+            table.add_row(*menu, style=f"bold {CYAN}")
+        print(table)
+        choice = self.console.input(f"[{ORANGE}]Your key choice: [/]")
+        return choice
 
-    def user_input(self, fields: dict) -> dict:
+    def multiple_inputs(self, fields: dict) -> dict:
         inputs = {}
         for key, value in fields.items():
             inputs[key] = self.console.input(f"[{ORANGE}]{value}[/]")

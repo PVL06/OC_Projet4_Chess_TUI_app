@@ -42,7 +42,7 @@ class PlayerCtl:
             "lastname": "Lastname: ",
             "date_of_birth": "Date of birth (dd/mm/yyyy): "
         }
-        user_input = self.view.user_input(fields)
+        user_input = self.view.multiple_inputs(fields)
         if player := self._create_player(user_input):
             if self.players_db.save_new_player(player):
                 self.view.view_message(f"New player id '{player.id}' saved !")
@@ -75,13 +75,14 @@ class PlayerCtl:
 
     def delete_player(self) -> None:
         if player := self._players_selection():
-            self.players_db.remove_player(player.id)
-            self.view.view_message(f"Player deleted: {player.__str__()}")
+            if self.view.confirm(f"Are you sure to remove player: {player.__str__()}"):
+                self.players_db.remove_player(player.id)
+                self.view.view_message(f"Player deleted: {player.__str__()}")
 
     def players_register(self) -> None:
         if players := self.players_db.get_all_players():
             list_of_players = [player.__dict__ for player in players]
-            if not self.view.view_table("Registered players", list_of_players):
+            if not self.view.table_view("Registered players", list_of_players, ):
                 self.view.view_message("No data", error=True)
 
     def _create_player(self, data: dict) -> Player | None:
@@ -97,11 +98,9 @@ class PlayerCtl:
 
     def _players_selection(self) -> Player | None:
         if players := self.players_db.get_all_players():
-            selection = []
-            for key, player in enumerate(players):
-                player_str = f"{player.id}: {player.lastname}, {player.firstname}, {player.date_of_birth}"
-                selection.append((str(key), player_str))
-            choice = self.view.input_menu(selection)
+            players_dict = [player.__dict__ for player in players]
+            self.view.table_view("Select player", players_dict, selection=True)
+            choice = self.view.simple_input("Enter key value: ")
             try:
                 choice = int(choice)
             except ValueError:
