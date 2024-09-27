@@ -105,9 +105,9 @@ class Controller:
                 case "4":
                     self.actual_tournament.add_tournament_comment()
                 case "5":
-                    self.actual_tournament.tournament_header()
+                    self.actual_tournament.view_tournament_header()
                 case "6":
-                    self.actual_tournament.get_tournament_players()
+                    self.actual_tournament.view_tournament_players()
                 case "7":
                     self.actual_tournament.rounds_and_matches()
                 case "8":

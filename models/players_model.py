@@ -9,7 +9,7 @@ class Player(BaseModel):
     date_of_birth: str = Field(pattern=r"^(0[1-9]|[12][0-9]|3[01])\/(0[0-9]|1[012])\/([0-9]{4})$")
 
     def __str__(self) -> str:
-        return f"{self.id}: {self.lastname}, {self.firstname}"
+        return f"{self.id} {self.lastname}, {self.firstname}"
 
 
 class PlayersDb:

@@ -31,12 +31,13 @@ class View:
             self.console.print(table)
             return True
 
-    def view_message(self, description: str, error=False) -> None:
+    def view_message(self, description: str, error=False, continue_enter=True) -> None:
         self.console.print(description, style=RED if error else GREEN)
-        self.enter_continue()
+        if continue_enter:
+            self.enter_continue()
 
     def enter_continue(self):
-        self.console.input(f"[{ORANGE}]Press on key to continue[/]")
+        self.console.input(f"[{ORANGE}]Press enter to continue[/]")
 
     def input_menu(self, menu_list: list | None) -> str | None:
         self.console.clear()
@@ -69,15 +70,3 @@ class View:
     def simple_input(self, message) -> str:
         choice = self.console.input(f"[{ORANGE}]{message}")
         return choice
-
-    def check_select_input(self, message: str, selection: list[int]) -> int | None:
-        choice = input(message)
-        try:
-            choice = int(choice)
-        except ValueError:
-            self.view_error_message("Enter a number !")
-        else:
-            if choice in selection:
-                return choice
-            self.view_error_message("Number not in selection !")
-        return None
