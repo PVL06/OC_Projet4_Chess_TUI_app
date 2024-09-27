@@ -2,38 +2,14 @@ from pydantic import ValidationError
 
 from views.view import View
 from models.players_model import PlayersDb, Player
+from controllers.utils import Utils
 
 
 class PlayerCtl:
     def __init__(self) -> None:
         self.view = View()
         self.players_db = PlayersDb()
-
-    def players_menu(self) -> None:
-        running = True
-        while running:
-            menu = [
-                ("1", "Add new player to register"),
-                ("2", "Modify player"),
-                ("3", "Delete player"),
-                ("4", "View players register"),
-                ("5", "Back")
-            ]
-            choice = self.view.input_menu(menu)
-            match choice:
-                case "1":
-                    self.register_new_player()
-                case "2":
-                    self.modify_player()
-                case "3":
-                    self.delete_player()
-                case "4":
-                    self.players_register()
-                    self.view.enter_continue()
-                case "5":
-                    running = False
-                case _:
-                    self.view.view_message("Invalid input !", error=True)
+        self.utils = Utils()
 
     def register_new_player(self) -> None:
         fields = {
@@ -50,7 +26,8 @@ class PlayerCtl:
                 self.view.view_message(f"Player id '{player.id}' already exist !", error=True)
 
     def modify_player(self) -> None:
-        if player := self._players_selection():
+        players = self.players_db.get_all_players()
+        if player := self.utils.players_selection(players):
             doc_id = self.players_db.get_player_doc_id(player.id)
             self.view.view_message("Press just enter for the same value or input new value")
             player = player.__dict__
@@ -74,7 +51,8 @@ class PlayerCtl:
                 self.view.view_message("No players", error=True)
 
     def delete_player(self) -> None:
-        if player := self._players_selection():
+        players = self.players_db.get_all_players()
+        if player := self.utils.players_selection(players):
             if self.view.confirm(f"Are you sure to remove player: {player.__str__()}"):
                 self.players_db.remove_player(player.id)
                 self.view.view_message(f"Player deleted: {player.__str__()}")
@@ -95,20 +73,3 @@ class PlayerCtl:
             self.view.view_message(f"Invalid input on field: {field_error}", error=True)
         else:
             return player
-
-    def _players_selection(self) -> Player | None:
-        if players := self.players_db.get_all_players():
-            players_dict = [player.__dict__ for player in players]
-            self.view.table_view("Select player", players_dict, selection=True)
-            choice = self.view.simple_input("Enter key value: ")
-            try:
-                choice = int(choice) - 1
-            except ValueError:
-                self.view.view_message("Invalid input !", error=True)
-            else:
-                if 0 <= choice < len(players):
-                    return players[choice]
-                else:
-                    self.view.view_message("Input out of range !", error=True)
-        else:
-            self.view.view_message("No players", error=True)
