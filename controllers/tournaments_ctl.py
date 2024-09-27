@@ -53,8 +53,7 @@ class TournamentsCtl:
                 })
             self.view.table_view("Select tournament", data, selection=True)
             choice = self.view.simple_input("Enter key tournament: ")
-            choice = self.utils.check_input_number(choice, len(tournaments))
-            if choice:
+            if choice := self.utils.check_input_number(choice, len(tournaments)):
                 tournament = tournaments[choice - 1]
                 self.view.view_message(f"Tournament '{tournament.name}' selected")
                 return tournament
@@ -150,14 +149,13 @@ class ActualTournament:
 
     def add_tournament_player(self) -> None:
         players_db = self.players_db.get_all_players()
-
         loop = True
         while loop:
             players_tournament_id = [player.id for player in self.actual_tournament.players]
             players_available = [player for player in players_db if player.id not in players_tournament_id]
             if players_available:
                 if not self.actual_tournament.start:
-                    if player := self._players_selection(players_available):
+                    if player := self.utils.players_selection(players_available):
                         self.actual_tournament.players.append(player)
                         self.tournament_db.save(self.actual_tournament)
                         messages = [
@@ -170,13 +168,22 @@ class ActualTournament:
 
                     if not self.view.confirm("add new player ?"):
                         loop = False
-
                 else:
                     self.view.view_message("Don't add player in started tournament !", error=True)
                     loop = False
             else:
                 self.view.view_message("All players in tournament or no players in register !", error=True)
                 loop = False
+
+    def remove_tournament_player(self) -> None:
+        player = self.utils.players_selection(self.actual_tournament.players)
+        for i in range(len(self.actual_tournament.players)):
+            if player.id == self.actual_tournament.players[i].id:
+                if self.view.confirm(f"Sure to remove player: {player.__str__()}"):
+                    del self.actual_tournament.players[i]
+                    self.tournament_db.save(self.actual_tournament)
+                    self.view.view_message(f"Player removed: {player.__str__()}")
+                break
 
     def start_tournament(self) -> None:
         if not self.actual_tournament.start[0]:
@@ -257,6 +264,7 @@ class ActualTournament:
         data = [{
             "Tournament name": self.actual_tournament.name,
             "Place": self.actual_tournament.place,
+            "Number of round": str(self.actual_tournament.number_of_round),
             "Status": self._tournament_status(self.actual_tournament)
         }]
         self.view.table_view("Tournament header", data)
@@ -303,20 +311,6 @@ class ActualTournament:
             if 1 <= choice <= max_value:
                 return choice
 
-    def _players_selection(self, players: list[Player]) -> Player | None:
-        players_dict = [player.__dict__ for player in players]
-        self.view.table_view("Select player", players_dict, selection=True)
-        choice = self.view.simple_input("Enter key value: ")
-        try:
-            choice = int(choice) - 1
-        except ValueError:
-            self.view.view_message("Invalid input !", error=True)
-        else:
-            if 0 <= choice < len(players):
-                return players[choice]
-            else:
-                self.view.view_message("Input out of range !", error=True)
-
     @staticmethod
     def _tournament_status(tournament: Tournament) -> str:
         if tournament.start and tournament.end:
@@ -325,3 +319,4 @@ class ActualTournament:
             return f"Started it {tournament.start} but no finished"
         else:
             return "No started"
+
