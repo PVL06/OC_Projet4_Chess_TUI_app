@@ -2,7 +2,18 @@ from tinydb import TinyDB, Query
 from pydantic import BaseModel, Field
 
 
+PLAYERS_DIR = "data/players.json"
+
+
 class Player(BaseModel):
+    """
+    Class player with regex for control fields
+    Id format -> AB12345
+    The first name and last name must have at least two characters
+    Date format -> 01/05/2000
+    return pydantic ValidationError if the formats are not respected
+    """
+
     id: str = Field(pattern=r"^([A-Z]{2})([0-9]{5})$")
     lastname: str = Field(pattern=r"^[a-zA-Z -]*$", min_length=2)
     firstname: str = Field(pattern=r"^[a-zA-Z -]*$", min_length=2)
@@ -13,8 +24,14 @@ class Player(BaseModel):
 
 
 class PlayersDb:
+    """
+    PlayersDb manage json file database with TinyDb
+    Get, update and remove player
+    Find player doc id and get all players
+    """
+
     def __init__(self) -> None:
-        self.db = TinyDB('data/players.json', indent=4)
+        self.db = TinyDB(PLAYERS_DIR, indent=4)
         self.query = Query()
 
     def save_new_player(self, player: Player) -> bool:
