@@ -5,6 +5,9 @@ from controllers.tournaments_ctl import TournamentsCtl, ActualTournament
 
 
 class Controller:
+    """
+    Main controller that manages the menus to dispatch functionalities to the players or tournaments controller
+    """
     def __init__(self):
         self.view = View()
         self.players_ctl = PlayerCtl()
@@ -49,7 +52,7 @@ class Controller:
                 case "3":
                     self.players_ctl.delete_player()
                 case "4":
-                    self.players_ctl.players_register()
+                    self.players_ctl.view_players_register()
                     self.view.enter_continue()
                 case "5":
                     running = False
