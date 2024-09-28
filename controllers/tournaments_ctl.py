@@ -182,16 +182,22 @@ class ActualTournament:
                     tournament.combination = random.sample(tournament.combination, len(tournament.combination))
                 self.tournament_db.save(tournament)
 
+                finished = True
                 round_number = len(tournament.rounds) + 1
                 if round_number <= tournament.number_of_round:
                     for i in range(round_number, tournament.number_of_round + 1):
                         self._start_round(i)
+                        if not self.view.confirm("Continue to the next round"):
+                            finished = False
+                            break
+                if finished:
+                    self.actual_tournament.end = datetime.now().strftime("%d-%m-%Y %H:%M")
+                    self.view.view_message("Tournament finished !")
+                    self.tournament_db.save(self.actual_tournament)
+                    self.show_players_result()
 
-                self.actual_tournament.end = datetime.now().strftime("%d-%m-%Y %H:%M")
-                self.tournament_db.save(self.actual_tournament)
-                self.view.view_message("Tournament finished !")
-                if self.view.confirm("Do you add a comment for this tournament ?"):
-                    self.add_tournament_comment()
+                    if self.view.confirm("Do you add a comment for this tournament ?"):
+                        self.add_tournament_comment()
             else:
                 self.view.view_message("Number of player is impair or less than 4 players", error=True)
         else:
@@ -253,6 +259,21 @@ class ActualTournament:
             else:
                 self.view.view_message("Key out of range", error=True)
 
+    def show_players_result(self):
+        if self.actual_tournament.start:
+            result_table = []
+            sorted_players = sorted(self.actual_tournament.players, key=lambda player: player[1], reverse=True)
+            for player_score in sorted_players:
+                result = {
+                    "Player": self.players_db.get_player(player_score[0]).__str__(),
+                    "Score": str(player_score[1])
+                }
+                result_table.append(result)
+            self.view.table_view("Results of tournament", result_table, selection=True)
+            self.view.enter_continue()
+        else:
+            self.view.view_message("Tournament is not started !", error=True)
+
     def _start_round(self, round_number: int) -> None:
         round = Round(round_number)
         combination = self.actual_tournament.combination
@@ -284,7 +305,6 @@ class ActualTournament:
         self.view.table_view(round_title, round_table)
         self.actual_tournament.rounds.append(round.__dict__)
         self.tournament_db.save(self.actual_tournament)
-        self.view.enter_continue()
 
     def _get_matches(self):
         players_id = [player[0] for player in self.actual_tournament.players]
@@ -328,7 +348,7 @@ class ActualTournament:
             if player[0] == player_id:
                 return player[1]
 
-    def _get_player_score(self, player_id: str) -> int:
+    def _get_player_score(self, player_id: str) -> list[[str, int]]:
         for player in self.actual_tournament.players:
             if player[0] == player_id:
                 return player

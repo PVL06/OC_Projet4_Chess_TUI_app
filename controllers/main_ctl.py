@@ -95,7 +95,8 @@ class Controller:
                 ("5", "View tournament name, place and status"),
                 ("6", "View tournament players"),
                 ("7", "View rounds and matches"),
-                ("8", "Back")
+                ("8", "View tournament result"),
+                ("9", "Back")
             ]
             choice = self.view.input_menu(menu)
             match choice:
@@ -114,6 +115,8 @@ class Controller:
                 case "7":
                     self.actual_tournament.rounds_and_matches()
                 case "8":
+                    self.actual_tournament.show_players_result()
+                case "9":
                     running = False
                 case _:
                     self.view.view_message("Invalid input !", error=True)
