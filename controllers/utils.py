@@ -8,6 +8,11 @@ class Utils:
         self.view = View()
 
     def players_selection(self, players: list[Player]) -> Player | None:
+        """
+        Show table of players and a user input to select player
+        return selected player object
+        """
+
         players_dict = [player.__dict__ for player in players]
         self.view.table_view("Select player", players_dict, selection=True)
         choice = self.view.simple_input("Enter key value: ")
@@ -23,6 +28,8 @@ class Utils:
 
     @staticmethod
     def check_input_number(choice: str, max_value: int) -> int | None:
+        """Check value of user input if is a number and return user input int"""
+
         try:
             choice = int(choice)
         except ValueError:
@@ -33,6 +40,8 @@ class Utils:
 
     @staticmethod
     def tournament_status(tournament: Tournament) -> str:
+        """Check status of tournament and return status string"""
+
         if tournament.start and tournament.end:
             return f"Finished it {tournament.end}"
         elif tournament.start and not tournament.end:
