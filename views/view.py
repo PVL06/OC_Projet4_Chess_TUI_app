@@ -4,7 +4,6 @@ from rich import print, box
 
 CYAN = "dark_cyan"
 ORANGE = "bold dark_orange3"
-BLUE = "dodger_blue2"
 GREEN = "bold green3"
 RED = "bold red"
 

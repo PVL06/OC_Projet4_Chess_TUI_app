@@ -61,21 +61,24 @@ class Controller:
         while running:
             menu = [
                 ("1", "Create new tournament"),
-                ("2", "Select tournament"),
-                ("3", "View all tournaments"),
-                ("4", "Back")
+                ("2", "Delete tournament"),
+                ("3", "Select tournament"),
+                ("4", "View all tournaments"),
+                ("5", "Back")
             ]
             choice = self.view.input_menu(menu)
             match choice:
                 case "1":
                     self.tournaments_ctl.create_new_tournament()
                 case "2":
+                    self.tournaments_ctl.delete_tournament()
+                case "3":
                     tournament = self.tournaments_ctl.select_tournament()
                     if tournament:
                         self.selected_tournament_menu(tournament)
-                case "3":
-                    self.tournaments_ctl.all_tournaments()
                 case "4":
+                    self.tournaments_ctl.all_tournaments()
+                case "5":
                     running = False
                 case _:
                     self.view.view_message("Invalid input !", error=True)

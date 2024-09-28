@@ -8,6 +8,9 @@ from views.view import View
 from models.tournaments_model import Tournament, TournamentsDb, Round
 from controllers.utils import Utils
 
+DRAW_POINT = 0.5
+WIN_POINT = 1
+
 
 class TournamentsCtl:
     def __init__(self) -> None:
@@ -25,7 +28,12 @@ class TournamentsCtl:
         }
         user_input = self.view.multiple_inputs(fields)
 
-        if user_input.get("name") not in tournaments_name:
+        conditions = [
+            user_input.get("name") not in tournaments_name,
+            len(user_input.get("name")) > 3,
+            len(user_input.get("place")) > 3
+        ]
+        if all(conditions):
             rounds_number = user_input.get("number_of_round")
             try:
                 rounds_number = int(rounds_number) if rounds_number else 4
@@ -39,7 +47,34 @@ class TournamentsCtl:
                 else:
                     self.view.view_message("Round must be in range 4 to 10 !", error=True)
         else:
-            self.view.view_message(f"Tournament: '{user_input.get('name')}' already exist !", error=True)
+            message = "Tournament name already exist or name and place less than 4 char!"
+            self.view.view_message(message, error=True)
+
+    def delete_tournament(self) -> None:
+        tournaments = self.tournament_db.get_all_tournaments()
+        if tournaments:
+            data = []
+            for tournament in tournaments:
+                data.append({
+                    "Tournament name": tournament.name,
+                    "Place": tournament.place,
+                    "Number of round": str(tournament.number_of_round),
+                    "Status": self.utils.tournament_status(tournament)
+                })
+            self.view.table_view("Select tournament", data, selection=True)
+            choice = self.view.simple_input("Enter tournament key :")
+            choice = self.utils.check_input_number(choice, len(tournaments))
+            if choice:
+                tournament = tournaments[choice - 1]
+                if self.view.confirm(f"Are you sure to delete tournament '{tournament.name}'"):
+                    if self.tournament_db.delete_tournament(tournament.name):
+                        self.view.view_message(f"Tournament '{tournament.name}' deleted !")
+                    else:
+                        self.view.view_message("Error !", error=True)
+            else:
+                self.view.view_message("Selection out of range !", error=True)
+        else:
+            self.view.view_message("No tournaments !", error=True)
 
     def select_tournament(self) -> Tournament | None:
         if tournaments := self.tournament_db.get_all_tournaments():
@@ -64,16 +99,19 @@ class TournamentsCtl:
 
     def all_tournaments(self) -> None:
         tournaments = self.tournament_db.get_all_tournaments()
-        data = []
-        for tournament in tournaments:
-            data.append({
-                "Tournament name": tournament.name,
-                "Place": tournament.place,
-                "Number of round": str(tournament.number_of_round),
-                "Status": self.utils.tournament_status(tournament)
-            })
-        self.view.table_view("Select tournament", data)
-        self.view.enter_continue()
+        if tournaments:
+            data = []
+            for tournament in tournaments:
+                data.append({
+                    "Tournament name": tournament.name,
+                    "Place": tournament.place,
+                    "Number of round": str(tournament.number_of_round),
+                    "Status": self.utils.tournament_status(tournament)
+                })
+            self.view.table_view("Select tournament", data)
+            self.view.enter_continue()
+        else:
+            self.view.view_message("No tournaments !", error=True)
 
 
 class ActualTournament:
@@ -117,14 +155,18 @@ class ActualTournament:
     def remove_tournament_player(self) -> None:
         if not self.actual_tournament.start:
             players = [self.players_db.get_player(player[0]) for player in self.actual_tournament.players]
-            player = self.utils.players_selection(players)
-            for i in range(len(players)):
-                if player.id == players[i].id:
-                    if self.view.confirm(f"Sure to remove player: {player.__str__()}"):
-                        del self.actual_tournament.players[i]
-                        self.tournament_db.save(self.actual_tournament)
-                        self.view.view_message(f"Player removed: {player.__str__()}")
-                    break
+            if players:
+                player = self.utils.players_selection(players)
+                if player:
+                    for i in range(len(players)):
+                        if player.id == players[i].id:
+                            if self.view.confirm(f"Sure to remove player: {player.__str__()}"):
+                                del self.actual_tournament.players[i]
+                                self.tournament_db.save(self.actual_tournament)
+                                self.view.view_message(f"Player removed: {player.__str__()}")
+                            break
+            else:
+                self.view.view_message("No players in this tournament !", error=True)
         else:
             self.view.view_message("Don't remove player in started tournament !", error=True)
 
@@ -147,10 +189,11 @@ class ActualTournament:
 
                 self.actual_tournament.end = datetime.now().strftime("%d-%m-%Y %H:%M")
                 self.tournament_db.save(self.actual_tournament)
+                self.view.view_message("Tournament finished !")
                 if self.view.confirm("Do you add a comment for this tournament ?"):
                     self.add_tournament_comment()
             else:
-                self.view.view_message("Number of player is impair !", error=True)
+                self.view.view_message("Number of player is impair or less than 4 players", error=True)
         else:
             self.view.view_message("Tournament is finished !", error=True)
 
@@ -166,9 +209,12 @@ class ActualTournament:
 
     def view_tournament_players(self) -> None:
         players = [self.players_db.get_player(player[0]).__dict__ for player in self.actual_tournament.players]
-        players.sort(key=lambda player: player.get("lastname"))
-        self.view.table_view("Players in tournament", players)
-        self.view.enter_continue()
+        if players:
+            players.sort(key=lambda player: player.get("lastname"))
+            self.view.table_view("Players in tournament", players)
+            self.view.enter_continue()
+        else:
+            self.view.view_message("No players in this tournament !", error=True)
 
     def add_tournament_comment(self) -> None:
         if self.actual_tournament.comment:
@@ -184,17 +230,28 @@ class ActualTournament:
             menu = []
             for i in range(len(self.actual_tournament.rounds)):
                 menu.append((str(i+1), self.actual_tournament.rounds[i].get("name")))
-            back_selection = [("0", "Back")]
-            choice = self.view.input_menu(back_selection + menu)
+            menu.append((str(len(menu) + 1), "Back"))
+            choice = self.view.input_menu(menu)
+            choice = self.utils.check_input_number(choice, len(menu))
             if choice:
-                if choice == "0":
+                if choice == len(menu):
                     loop = False
                 else:
-                    choice = self.utils.check_input_number(choice, len(self.actual_tournament.rounds))
                     selected_round = self.actual_tournament.rounds[choice - 1]
-                    print(selected_round.get("matches")[0])
-                    self.view.table_view(selected_round.get("name"), selected_round.get("matches")[0])
+                    matches_table = []
+                    for match in selected_round.get("matches"):
+                        row = {
+                            "player 1": match[0][0],
+                            "player 1 score": str(match[0][1]),
+                            "VS": "<-->",
+                            "player 2": match[1][0],
+                            "player 2 score": str(match[1][1])
+                        }
+                        matches_table.append(row)
+                    self.view.table_view(selected_round.get("name"), matches_table)
                     self.view.enter_continue()
+            else:
+                self.view.view_message("Key out of range", error=True)
 
     def _start_round(self, round_number: int) -> None:
         round = Round(round_number)
@@ -202,28 +259,16 @@ class ActualTournament:
         combination.sort(key=lambda player_id: abs(self._get_score(player_id[0]) - self._get_score(player_id[1])))
 
         matches = self._get_matches()
+
         round_title = f"{round.name}/{self.actual_tournament.number_of_round}"
         round_table = self._get_matches_table(matches)
-        self.round_result = [False] * len(matches)
         self.view.table_view(round_title, round_table)
         self.view.simple_input(f"Press enter to start {round_title}")
         round.round_start = datetime.now().strftime("%d-%m-%Y %H:%M")
         round_title += f"  Start: {round.round_start}"
 
-        while not all(self.round_result):
-            self.view.table_view(round_title, round_table)
-            selected_match = self.view.simple_input("Enter match number: ")
-            selected_match = self.utils.check_input_number(selected_match, len(matches))
-            if not selected_match:
-                self.view.view_message("Selection out of range", error=True)
-                continue
-            choice_menu = "Enter match result (0: draw, 1: player1 win, 2: player 2 win): "
-            choice_result = self.view.simple_input(choice_menu)
-            if selected_match and choice_result in ["0", "1", "2"]:
-                round_table[selected_match - 1]["Winner"] = str(choice_result)
-                self.round_result[selected_match - 1] = True
-            else:
-                self.view.view_message("Bad input for result selection !")
+        self.round_result = [False] * len(matches)
+        self._matches_results_input(round_title, round_table)
 
         round.round_stop = datetime.now().strftime("%d/%m/%Y %H:%M")
         round_title += f" | End: {round.round_stop}"
@@ -231,7 +276,7 @@ class ActualTournament:
 
         self._update_scores(round_table)
         updated_matches = self._update_matches(matches)
-        round.matches.append(copy.deepcopy(updated_matches))
+        round.matches = copy.deepcopy(updated_matches)
         round_table = self._get_matches_table(matches)
         for line in round_table:
             for key in ["key", "", "Winner"]:
@@ -262,6 +307,22 @@ class ActualTournament:
 
         return matches
 
+    def _matches_results_input(self, round_title: str, round_table: list[dict]):
+        while not all(self.round_result):
+            self.view.table_view(round_title, round_table)
+            selected_match = self.view.simple_input("Enter match number: ")
+            selected_match = self.utils.check_input_number(selected_match, len(round_table))
+            if not selected_match:
+                self.view.view_message("Selection out of range", error=True)
+                continue
+            choice_menu = "Enter match result (0: draw, 1: player1 win, 2: player 2 win): "
+            choice_result = self.view.simple_input(choice_menu)
+            if selected_match and choice_result in ["0", "1", "2"]:
+                round_table[selected_match - 1]["Winner"] = str(choice_result)
+                self.round_result[selected_match - 1] = True
+            else:
+                self.view.view_message("Bad input for result selection !", error=True)
+
     def _get_score(self, player_id: str) -> int:
         for player in self.actual_tournament.players:
             if player[0] == player_id:
@@ -291,12 +352,12 @@ class ActualTournament:
         for line in round_table:
             match line.get("Winner"):
                 case "0":
-                    self._add_player_point(line.get("player 1 (WHITE)").split(" ")[0], 0.5)
-                    self._add_player_point(line.get("player 2 (BLACK)").split(" ")[0], 0.5)
+                    self._add_player_point(line.get("player 1 (WHITE)").split(" ")[0], DRAW_POINT)
+                    self._add_player_point(line.get("player 2 (BLACK)").split(" ")[0], DRAW_POINT)
                 case "1":
-                    self._add_player_point(line.get("player 1 (WHITE)").split(" ")[0], 1)
+                    self._add_player_point(line.get("player 1 (WHITE)").split(" ")[0], WIN_POINT)
                 case "2":
-                    self._add_player_point(line.get("player 2 (BLACK)").split(" ")[0], 1)
+                    self._add_player_point(line.get("player 2 (BLACK)").split(" ")[0], WIN_POINT)
 
     def _update_matches(self, matches):
         updated_match = []
@@ -307,7 +368,6 @@ class ActualTournament:
         return updated_match
 
     def _add_player_point(self, player_id: str, point: float) -> None:
-        print(player_id)
         for i in range(len(self.actual_tournament.players)):
             if player_id == self.actual_tournament.players[i][0]:
                 self.actual_tournament.players[i][1] += point

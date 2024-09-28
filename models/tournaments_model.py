@@ -39,6 +39,11 @@ class TournamentsDb:
         else:
             self.db.insert(serialized_tournament)
 
+    def delete_tournament(self, name: str):
+        if self.db.remove(self.query.name.matches(name)):
+            return True
+        return False
+
     def get_all_tournaments(self) -> list[Tournament]:
         tournaments = []
         for tournament in self.db.all():
