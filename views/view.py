@@ -9,6 +9,10 @@ RED = "bold red"
 
 
 class View:
+    """
+    Class with functions to show different output or input for user
+    """
+
     def __init__(self) -> None:
         self.console = Console()
 
@@ -16,7 +20,7 @@ class View:
         self.console.clear()
         if data:
             table = Table(title=title, min_width=80, style=CYAN, box=box.ROUNDED)
-            table.header_style = f"bold CYAN"
+            table.header_style = "bold CYAN"
             table.row_styles = ["bold dim", "bold CYAN"]
             if selection:
                 table.add_column("key")
@@ -43,7 +47,7 @@ class View:
         table = Table(box=box.ROUNDED,
                       min_width=80,
                       style=CYAN,
-                      header_style=f"bold CYAN",
+                      header_style="bold CYAN",
                       show_lines=True,
                       show_header=False)
         table.add_column("Key", justify="center")
