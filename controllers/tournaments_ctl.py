@@ -10,9 +10,16 @@ from controllers.utils import Utils
 
 DRAW_POINT = 0.5
 WIN_POINT = 1
+MIN_PLAYERS = 4
 
 
 class TournamentsCtl:
+    """
+    Class to manage tournaments
+    Create new tournament and delete tournament
+    Select one tournament
+    """
+
     def __init__(self) -> None:
         self.view = View()
         self.tournament_db = TournamentsDb()
@@ -51,17 +58,9 @@ class TournamentsCtl:
             self.view.view_message(message, error=True)
 
     def delete_tournament(self) -> None:
-        tournaments = self.tournament_db.get_all_tournaments()
-        if tournaments:
-            data = []
-            for tournament in tournaments:
-                data.append({
-                    "Tournament name": tournament.name,
-                    "Place": tournament.place,
-                    "Number of round": str(tournament.number_of_round),
-                    "Status": self.utils.tournament_status(tournament)
-                })
-            self.view.table_view("Select tournament", data, selection=True)
+        if tournaments := self.tournament_db.get_all_tournaments():
+            table = self._get_tournaments_table(tournaments)
+            self.view.table_view("Select tournament", table, selection=True)
             choice = self.view.simple_input("Enter tournament key :")
             choice = self.utils.check_input_number(choice, len(tournaments))
             if choice:
@@ -78,17 +77,10 @@ class TournamentsCtl:
 
     def select_tournament(self) -> Tournament | None:
         if tournaments := self.tournament_db.get_all_tournaments():
-            data = []
-            for tournament in tournaments:
-                data.append({
-                    "Tournament name": tournament.name,
-                    "Place": tournament.place,
-                    "Number of round": str(tournament.number_of_round),
-                    "status": self.utils.tournament_status(tournament)
-                })
-            self.view.table_view("Select tournament", data, selection=True)
+            table = self._get_tournaments_table(tournaments)
+            self.view.table_view("Select tournament", table, selection=True)
             choice = self.view.simple_input("Enter key tournament: ")
-            if choice := self.utils.check_input_number(choice, len(tournaments)):
+            if choice := self.utils.check_input_number(choice, len(table)):
                 tournament = tournaments[choice - 1]
                 self.view.view_message(f"Tournament '{tournament.name}' selected")
                 return tournament
@@ -98,23 +90,33 @@ class TournamentsCtl:
             self.view.view_message("No tournament !", error=True)
 
     def all_tournaments(self) -> None:
-        tournaments = self.tournament_db.get_all_tournaments()
-        if tournaments:
-            data = []
-            for tournament in tournaments:
-                data.append({
-                    "Tournament name": tournament.name,
-                    "Place": tournament.place,
-                    "Number of round": str(tournament.number_of_round),
-                    "Status": self.utils.tournament_status(tournament)
-                })
-            self.view.table_view("Select tournament", data)
+        if tournaments := self.tournament_db.get_all_tournaments():
+            table = self._get_tournaments_table(tournaments)
+            self.view.table_view("Select tournament", table)
             self.view.enter_continue()
         else:
             self.view.view_message("No tournaments !", error=True)
 
+    def _get_tournaments_table(self, tournaments: list[Tournament]) -> list[dict] | None:
+        data = []
+        for tournament in tournaments:
+            data.append({
+                "Tournament name": tournament.name,
+                "Place": tournament.place,
+                "Number of round": str(tournament.number_of_round),
+                "status": self.utils.tournament_status(tournament)
+            })
+        return data
+
 
 class ActualTournament:
+    """
+    Manage one tournament selected
+    Add or remove player in tournament
+    Start the tournament with rounds and matches
+    Reports: players in tournament, tournament header, rounds/matches and results
+    """
+
     def __init__(self):
         self.actual_tournament = None
         self.round_result = []
@@ -154,10 +156,8 @@ class ActualTournament:
 
     def remove_tournament_player(self) -> None:
         if not self.actual_tournament.start:
-            players = [self.players_db.get_player(player[0]) for player in self.actual_tournament.players]
-            if players:
-                player = self.utils.players_selection(players)
-                if player:
+            if players := [self.players_db.get_player(player[0]) for player in self.actual_tournament.players]:
+                if player := self.utils.players_selection(players):
                     for i in range(len(players)):
                         if player.id == players[i].id:
                             if self.view.confirm(f"Sure to remove player: {player.__str__()}"):
@@ -173,7 +173,7 @@ class ActualTournament:
     def start_tournament(self) -> None:
         tournament = self.actual_tournament
         if not tournament.end:
-            if len(tournament.players) % 2 == 0 and len(tournament.players) >= 4:
+            if len(tournament.players) % 2 == 0 and len(tournament.players) >= MIN_PLAYERS:
                 tournament.start = datetime.now().strftime("%d-%m-%Y %H:%M")
 
                 if not tournament.combination:
@@ -225,7 +225,7 @@ class ActualTournament:
     def add_tournament_comment(self) -> None:
         if self.actual_tournament.comment:
             if not self.view.confirm("Comment already exist, do you create new comment ?"):
-                return None
+                return
         comment = self.view.simple_input("Enter your comment (enter to valid): ")
         self.actual_tournament.comment = comment
         self.tournament_db.save(self.actual_tournament)
@@ -306,7 +306,7 @@ class ActualTournament:
         self.actual_tournament.rounds.append(round.__dict__)
         self.tournament_db.save(self.actual_tournament)
 
-    def _get_matches(self):
+    def _get_matches(self) -> list:
         players_id = [player[0] for player in self.actual_tournament.players]
 
         matches = []
@@ -379,7 +379,7 @@ class ActualTournament:
                 case "2":
                     self._add_player_point(line.get("player 2 (BLACK)").split(" ")[0], WIN_POINT)
 
-    def _update_matches(self, matches):
+    def _update_matches(self, matches) -> list:
         updated_match = []
         for match in matches:
             player_1 = self._get_player_score(match[0][0])
