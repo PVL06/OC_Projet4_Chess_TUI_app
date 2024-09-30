@@ -1,28 +1,27 @@
-# OC Projet4 Chess_app
+# OC Projet4:  Chess app
 
-Ce projet 4 du parcours de developpeur d'application python d'OpenclassRooms est la création d'un logiciel de gestion de tournoi et de joueurs pour un club d'échec.
-Le logiciel fonctionne en local et les données sont conservées sur des fichiers JSON, l'interface utilisateur se trouve sur le terminal directement.
+Ce projet fait partie du parcours de développeur d'application Python sur OpenClassrooms. Il consiste en la création d'un logiciel de gestion de tournois et de joueurs pour un club d'échecs. Le logiciel fonctionne localement et les données sont stockées dans des fichiers JSON. L'interface utilisateur est directement accessible via le terminal.
 
-## Fonctionnalitées
-1. Players
-    * Ajout d'un joueur dans le registe en renseignant sont identifiant national d’échecs, nom, prénom et date de naissance
-    * Suppression ou modification des données d'un joueur dans le registre
-    * Rapport sur les joueurs contenu dans le registre
-2. Tournaments
-    * Création d'un nouveau tournoi en renseignant le nom, le lieu et le nombre de round du tournoi
-    * Suppression d'un tournoi
-    * Rapport sur tout les tournois
-    * Selection d'un tournoi:
-        * Ajouter ou supprimer un joueur au tournoi selectionné
-        * Commencer ou reprendre le tournoi
-        * Ajouter un commentaire
-        * Rapport sur le tounoi (nom, lieu et status)
-        * Rapport sur les joueurs participants 
-        * Rapport sur les différents rounds et matchs
-        * Rapport sur le resultat du tournoi avec classement des joueurs par point
+## Fonctionnalités
+1. **Players**
+    * Ajouter un joueur dans le registre en saisissant son identifiant national d’échecs, son nom, prénom et sa date de naissance.
+    * Modifier ou supprimer les données d'un joueur dans le registre.
+    * Générer un rapport sur les joueurs contenus dans le registre.
+2. **Tournaments**
+    * Créer un nouveau tournoi en renseignant le nom, le lieu et le nombre de rounds.
+    * Supprimer un tournoi.
+    * Générer un rapport sur tous les tournois.
+    * Sélectionner un tournoi :
+        * Ajouter ou retirer un joueur du tournoi sélectionné.
+        * Commencer ou reprendre le tournoi.
+        * Ajouter un commentaire.
+        * Générer un rapport sur le tournoi (nom, lieu et statut).
+        * Générer un rapport sur les joueurs participants.
+        * Générer un rapport sur les rounds et matchs.
+        * Générer un rapport sur le résultat final du tournoi, avec classement des joueurs par points.
 
 ## Installation
-1. Cloner le repository
+1. Cloner le dépôt
 ```bash
 git clone https://github.com/PVL06/OC_Projet4_Chess_TUI_app.git
 ```
@@ -32,22 +31,22 @@ git clone https://github.com/PVL06/OC_Projet4_Chess_TUI_app.git
 cd OC_Projet2
 python -m venv env
 ```
-Activer l'environnement virtuel sur Windows:
+Activation de l'environnement virtuel sur Windows
 ```bash
 env\Scripts\activate
 ```
-Activer l'environnement virtuel sur macOS et Linux
+Activation de l'environnement virtuel sur macOS et Linux
 ```bash
 source env/bin/activate
 ```
 3. Installer des dépendances
-Utilisez pip pour installer les bibliothèques nécessaires :
+Utilisez pip pour installer les bibliothèques nécessaires
 ```bash
 pip install -r requirements.txt
 ```
 
 ## Lancement
-Lancement du programme
+Pour lancer le programme
 ```bash
 python main.py
 ```
