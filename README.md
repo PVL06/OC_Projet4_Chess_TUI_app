@@ -58,7 +58,7 @@ Pour lancer un nouveau rapport flake8
 $ flake8 --format=html --htmldir=flake8_report
 ```
 Dernier rapport flake8 généré
-![Flake8 html report](/img/flake8_last_report)
+![Flake8 html report](/img/flake8_last_report.png)
 
 
 
