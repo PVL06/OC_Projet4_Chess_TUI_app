@@ -1,7 +1,7 @@
-from views.view import View
-from models.tournaments_model import Tournament
-from controllers.players_ctl import PlayerCtl
-from controllers.tournaments_ctl import TournamentsCtl, ActualTournament
+from chess_tui.views.view import View
+from chess_tui.models.tournaments_model import Tournament
+from chess_tui.controllers.players_ctl import PlayerCtl
+from chess_tui.controllers.tournaments_ctl import TournamentsCtl, ActualTournament
 
 
 class Controller:
@@ -18,8 +18,8 @@ class Controller:
         running = True
         while running:
             menu = [
-                ("1", "Player"),
-                ("2", "Tournament"),
+                ("1", "Players"),
+                ("2", "Tournaments"),
                 ("3", "Quit")
             ]
             choice = self.view.input_menu(menu)

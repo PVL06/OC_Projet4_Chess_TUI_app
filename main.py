@@ -1,6 +1,6 @@
 import os
 
-from controllers.main_ctl import Controller
+from chess_tui.controllers.main_ctl import Controller
 
 
 if __name__ == "__main__":

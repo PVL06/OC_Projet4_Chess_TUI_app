@@ -3,10 +3,10 @@ from datetime import datetime
 import random
 import itertools
 
-from models.players_model import PlayersDb
-from views.view import View
-from models.tournaments_model import Tournament, TournamentsDb, Round
-from controllers.utils import Utils
+from chess_tui.models.players_model import PlayersDb
+from chess_tui.views.view import View
+from chess_tui.models.tournaments_model import Tournament, TournamentsDb, Round
+from chess_tui.controllers.utils import Utils
 
 DRAW_POINT = 0.5
 WIN_POINT = 1

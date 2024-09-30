@@ -1,6 +1,6 @@
-from views.view import View
-from controllers.players_ctl import Player
-from models.tournaments_model import Tournament
+from chess_tui.views.view import View
+from chess_tui.controllers.players_ctl import Player
+from chess_tui.models.tournaments_model import Tournament
 
 
 class Utils:

@@ -1,8 +1,8 @@
 from pydantic import ValidationError
 
-from views.view import View
-from models.players_model import PlayersDb, Player
-from controllers.utils import Utils
+from chess_tui.views.view import View
+from chess_tui.models.players_model import PlayersDb, Player
+from chess_tui.controllers.utils import Utils
 
 
 class PlayerCtl:
