@@ -275,6 +275,7 @@ class ActualTournament:
             self.view.view_message("Tournament is not started !", error=True)
 
     def _start_round(self, round_number: int) -> None:
+        """Create a new round"""
         round = Round(round_number)
         combination = self.actual_tournament.combination
         combination.sort(key=lambda player_id: abs(self._get_score(player_id[0]) - self._get_score(player_id[1])))
@@ -307,6 +308,7 @@ class ActualTournament:
         self.tournament_db.save(self.actual_tournament)
 
     def _get_matches(self) -> list:
+        """get matches in possible combination for each player and return list of match"""
         players_id = [player[0] for player in self.actual_tournament.players]
 
         matches = []
@@ -328,6 +330,7 @@ class ActualTournament:
         return matches
 
     def _matches_results_input(self, round_title: str, round_table: list[dict]):
+        """Asks the user to enter the result of each match"""
         while not all(self.round_result):
             self.view.table_view(round_title, round_table)
             selected_match = self.view.simple_input("Enter match number: ")
